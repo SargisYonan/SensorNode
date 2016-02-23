@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<data>
+  <loop>false</loop>
+  <repeat_times>1</repeat_times>
+  <repeat_period>500</repeat_period>
+  <frames_list>
+    <frame name="GET_STATUS">
+      <payload>7E0008010100010033002D9C</payload>
+    </frame>
+    <frame name="ENABLE">
+      <payload>7E00090101000100FF00002DD0</payload>
+    </frame>
+    <frame name="DISABLE">
+      <payload>7E00080101000100AA002D25</payload>
+    </frame>
+    <frame name="CHANGE_SETPOINT">
+      <payload>7E00080101000100BB002D14</payload>
+    </frame>
+    <frame name="CHANGE_+_OFFSET">
+      <payload>7E00080101000100CC002D03</payload>
+    </frame>
+    <frame name="CHANGE_-_OFFSET">
+      <payload>7E0008010100010022002DAD</payload>
+    </frame>
+  </frames_list>
+</data>
