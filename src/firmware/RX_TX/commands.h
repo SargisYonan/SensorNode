@@ -28,14 +28,18 @@
 
 // RX/TX COMMANDS //
 
-#define ENABLE 				                    0xFF
-#define DISABLE 			                    0xAA
-#define GET_SENSOR_VALUE 						0xCC
-#define GET_SENSOR_STATUS       				0x33
-#define GET_SENSOR_TYPE							0x19
+#define ENABLE 				                    0x45	//E
+#define DISABLE 			                    0x44 	//D
+#define GET_SENSOR_VALUE 						0x56 	//V
+#define GET_SENSOR_STATUS       				0x53 	//S
+#define GET_SENSOR_TYPE							0x54 	//T
 
-#define SEND_CURRENT_SENSOR_VALUE()				Sensor->currentValue[9] = '\0';\
-												uprintf("/%s/", Sensor->currentValue)
+
+#ifdef I2C_LIGHT_SENSOR
+#define SEND_CURRENT_SENSOR_VALUE()				uprintf("/%d/", Sensor->currentValue)
+#elif ONE_WIRE_TEMP_SENS
+#define SEND_CURRENT_SENSOR_VALUE() 			uprintf("/%f/", Sensor->currentValue)
+#endif
 #define SEND_CURRENT_SENSOR_STATUS() 			uprintf("/%d/", Sensor->status)
 #define SEND_SENSOR_TYPE()					    uprintf("/%d/", Sensor->deviceType)	
 

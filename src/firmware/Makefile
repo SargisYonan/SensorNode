@@ -4,9 +4,14 @@ AVRDUDE_CONTROLLER 	         = m2560
 CC							 = avr-gcc
 
 ################################################################
-LIGHT_SENSOR_CSOURCE		 = I2C_lib/i2c_master.c
-LIGHT_SENSOR_FLAGS			 = -DI2C_LIGHT_SENSOR -DDEVICE_TYPE=0x01
-LIGHT_SENSOR_OBJECTS 		 = i2c_master.o
+LIGHT_SENSOR_CSOURCE		= I2C_lib/i2c_master.c
+LIGHT_SENSOR_FLAGS			= -DI2C_LIGHT_SENSOR -DDEVICE_TYPE=0x01
+LIGHT_SENSOR_OBJECTS 		= i2c_master.o
+################################################################
+################################################################
+TEMPERATURE_SENSOR_CSOURCE		= OneWire/OneWire.c
+TEMPERATURE_SENSOR_FLAGS		= -DONE_WIRE_TEMP_SENS -DDEVICE_TYPE=0x02
+TEMPERATURE_SENSOR_OBJECTS 		= OneWire.o
 ################################################################
 
 BASE_CSOURCE				 = main.c UART_Library/uart.c Sensor_Driver/driver.c
@@ -27,6 +32,13 @@ spotless:
 light:
 	${CC} ${PHASE_ONE} ${LIGHT_SENSOR_FLAGS} ${BASE_CSOURCE} ${LIGHT_SENSOR_CSOURCE}
 	${CC} ${PHASE_TWO} ${LIGHT_SENSOR_OBJECTS}
+	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
+	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
+	rm -f ${OBJECTS} ${EXECUTABLE}.elf
+
+temp:
+	${CC} ${PHASE_ONE} ${TEMPERATURE_SENSOR_FLAGS} ${BASE_CSOURCE} ${TEMPERATURE_SENSOR_CSOURCE}
+	${CC} ${PHASE_TWO} ${TEMPERATURE_SENSOR_OBJECTS}
 	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
 	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
 	rm -f ${OBJECTS} ${EXECUTABLE}.elf

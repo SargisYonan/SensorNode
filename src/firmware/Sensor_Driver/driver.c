@@ -9,8 +9,14 @@
 #include "driver.h"
 #include "SensorStructure.h"
 #include "../UART_LIBRARY/uart.h"
-#include "../I2C_lib/i2c_master.h"
 #include "../sensor_lib/sensor_settings.h"
+#include "../RX_TX/commands.h"
+#ifdef I2C_LIGHT_SENSOR
+#include "../I2C_lib/i2c_master.h"
+#elif ONE_WIRE_TEMP_SENS
+#include "../OneWire/OneWire.h"
+#endif
+
 
 //* CREATED BY SARGIS S YONAN - 12 OCT. 2015 */
 //* A FUNCTION THAT MIMICS <stdio.h>'s PRINTF FUNCTION */
@@ -49,6 +55,9 @@ bool SystemInit(void)
    	Sensor->status = 0x00;
    	#ifdef I2C_LIGHT_SENSOR
 	i2c_start(I2C_LOW_ADDRESS);
+	Sensor->currentValue = 0;
+   	#elif ONE_WIRE_TEMP_SENS
+   	Sensor->currentValue = 0.0;
    	#endif
    	uprintf("/%s/","INIT");
    	return true;
