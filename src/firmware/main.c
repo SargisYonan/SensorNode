@@ -7,11 +7,14 @@
 
 #ifdef I2C_LIGHT_SENSOR
 #include "I2C_lib/i2c_master.h"
-#define UPDATE_SENSOR_MEASUREMENT() i2c_receive(I2C_LOW_ADDRESS, &(Sensor->currentValue), 1)
+#define UPDATE_SENSOR_MEASUREMENT() i2c_receive(I2C_LOW_ADDRESS, Sensor->currentValue, 2)
 
 #elif ONE_WIRE_TEMP_SENS
 #include "OneWire/OneWire.h"
 #define UPDATE_SENSOR_MEASUREMENT() Sensor->currentValue = getTemperatureC();
+#elif DHT11
+#include "DHT11/DHT.h"
+#define UPDATE_SENSOR_MEASUREMENT() fetchData(Sensor->currentValue)
 #else
 UPDATE_SENSOR_MEASUREMENT() return 0
 #endif

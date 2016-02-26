@@ -13,6 +13,11 @@ TEMPERATURE_SENSOR_CSOURCE		= OneWire/OneWire.c
 TEMPERATURE_SENSOR_FLAGS		= -DONE_WIRE_TEMP_SENS -DDEVICE_TYPE=0x02
 TEMPERATURE_SENSOR_OBJECTS 		= OneWire.o
 ################################################################
+################################################################
+DHT11_SENSOR_CSOURCE		= DHT11/DHT.c
+DHT11_SENSOR_FLAGS			= -DDHT11 -DDEVICE_TYPE=0x03
+DHT11_SENSOR_OBJECTS 		= DHT.o
+################################################################
 
 BASE_CSOURCE				 = main.c UART_Library/uart.c Sensor_Driver/driver.c
 OBJECTS  					 = main.o uart.o driver.o 
@@ -39,6 +44,13 @@ light:
 temp:
 	${CC} ${PHASE_ONE} ${TEMPERATURE_SENSOR_FLAGS} ${BASE_CSOURCE} ${TEMPERATURE_SENSOR_CSOURCE}
 	${CC} ${PHASE_TWO} ${TEMPERATURE_SENSOR_OBJECTS}
+	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
+	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
+	rm -f ${OBJECTS} ${EXECUTABLE}.elf
+
+dht:
+	${CC} ${PHASE_ONE} ${DHT11_SENSOR_FLAGS} ${BASE_CSOURCE} ${DHT11_SENSOR_CSOURCE}
+	${CC} ${PHASE_TWO} ${DHT11_SENSOR_OBJECTS}
 	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
 	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
 	rm -f ${OBJECTS} ${EXECUTABLE}.elf

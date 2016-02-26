@@ -8,9 +8,11 @@
 struct SensorStructure
 {
 	#ifdef I2C_LIGHT_SENSOR
-	int currentValue;	// measurement
+	uint8_t currentValue[2];	// measurement
 	#elif ONE_WIRE_TEMP_SENS
 	float currentValue;
+	#elif DHT11
+	uint8_t currentValue[4];	// measurement
 	#endif
 	uint8_t status;		// On/Off
 	uint8_t deviceType;

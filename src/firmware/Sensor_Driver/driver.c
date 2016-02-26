@@ -15,6 +15,8 @@
 #include "../I2C_lib/i2c_master.h"
 #elif ONE_WIRE_TEMP_SENS
 #include "../OneWire/OneWire.h"
+#elif DHT11
+#include "../DHT11/DHT.h"
 #endif
 
 
@@ -45,6 +47,10 @@ void uprintf (char* input_string, ...)
 
 bool SystemInit(void)
 {
+	#ifdef I2C_LIGHT_SENSOR
+	uint8_t txData;
+	txData = 0x10;
+	#endif
     sei();				/* enables AVR interrupts */
    	RX_TX_FUNCTION_init(UART_BAUD_SELECT(BAUDRATE,F_CPU));
    	
@@ -55,10 +61,17 @@ bool SystemInit(void)
    	Sensor->status = 0x00;
    	#ifdef I2C_LIGHT_SENSOR
 	i2c_start(I2C_LOW_ADDRESS);
-	Sensor->currentValue = 0;
+	i2c_transmit(I2C_LOW_ADDRESS, &txData, 1);
+	Sensor->currentValue[0] = 0;
+	Sensor->currentValue[1] = 0;
    	#elif ONE_WIRE_TEMP_SENS
    	Sensor->currentValue = 0.0;
+   	#elif DHT11
+	initDHT();
+   	Sensor->currentValue[0] = 0;
+   	Sensor->currentValue[1] = 0;
    	#endif
+
    	uprintf("/%s/","INIT");
    	return true;
 }

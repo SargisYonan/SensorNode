@@ -36,9 +36,11 @@
 
 
 #ifdef I2C_LIGHT_SENSOR
-#define SEND_CURRENT_SENSOR_VALUE()				uprintf("/%d/", Sensor->currentValue)
+#define SEND_CURRENT_SENSOR_VALUE()				uprintf("/%d%d/", Sensor->currentValue[0], Sensor->currentValue[1])
 #elif ONE_WIRE_TEMP_SENS
 #define SEND_CURRENT_SENSOR_VALUE() 			uprintf("/%f/", Sensor->currentValue)
+#elif DHT11
+#define SEND_CURRENT_SENSOR_VALUE() 			uprintf("/%d/", Sensor->currentValue[0])
 #endif
 #define SEND_CURRENT_SENSOR_STATUS() 			uprintf("/%d/", Sensor->status)
 #define SEND_SENSOR_TYPE()					    uprintf("/%d/", Sensor->deviceType)	
