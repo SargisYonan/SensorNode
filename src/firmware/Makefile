@@ -19,7 +19,7 @@ DHT11_SENSOR_FLAGS			= -DDHT11 -DDEVICE_TYPE=0x03
 DHT11_SENSOR_OBJECTS 		= DHT.o
 ################################################################
 
-BASE_CSOURCE				 = main.c UART_Library/uart.c Sensor_Driver/driver.c
+BASE_CSOURCE				 = main.c UART_LIBRARY/uart.c Sensor_Driver/driver.c
 OBJECTS  					 = main.o uart.o driver.o 
 EXECUTABLE					 = main
 COMPILER_PATH				 = /dev/tty.usbmodem1421
@@ -30,10 +30,12 @@ CFLAGS						 = -Wall -Werror -Wextra -Wimplicit -std=gnu99
 PHASE_ONE					 = -Os -mmcu=${AVR_GCC_CONTROLLER} -DF_CPU=16000000UL ${CFLAGS} -c
 PHASE_TWO					 = -mmcu=${AVR_GCC_CONTROLLER} -Wl,-u,vfprintf -lprintf_flt -lm -o${EXECUTABLE}.elf ${OBJECTS}
 
+.PHONY: clean, all
 all:
 	echo "INCORRECT USAGE"
 	echo "SELECT A CORRECT TARGET"
-spotless:
+
+clean:
 	rm -f ${OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf
 
 light:
