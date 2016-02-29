@@ -19,7 +19,7 @@ DHT11_SENSOR_FLAGS			= -DDHT11 -DDEVICE_TYPE=0x03
 DHT11_SENSOR_OBJECTS 		= DHT.o
 ################################################################
 
-BASE_CSOURCE				 = main.c UART_Library/uart.c Sensor_Driver/driver.c
+BASE_CSOURCE				 = main.c UART_LIBRARY/uart.c Sensor_Driver/driver.c
 OBJECTS  					 = main.o uart.o driver.o 
 EXECUTABLE					 = main
 COMPILER_PATH				 = /dev/tty.usbmodem1421
