@@ -33,8 +33,8 @@ PHASE_TWO					 = -mmcu=${AVR_GCC_CONTROLLER} -Wl,-u,vfprintf -lprintf_flt -lm -o
 
 .PHONY: clean, all
 all:
-	echo "INCORRECT USAGE"
-	echo "SELECT A CORRECT TARGET"
+	@echo "INCORRECT USAGE"
+	@echo "SELECT A CORRECT TARGET"
 
 clean:
 	rm -f ${OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf
