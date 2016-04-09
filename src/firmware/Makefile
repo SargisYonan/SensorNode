@@ -39,7 +39,7 @@ CFLAGS						 = -Wall -Werror -Wextra -Wimplicit -std=gnu99
 PHASE_ONE					 = -Os -mmcu=${AVR_GCC_CONTROLLER} -DF_CPU=16000000UL ${CFLAGS} -c
 PHASE_TWO					 = -mmcu=${AVR_GCC_CONTROLLER} -Wl,-u,vfprintf -lprintf_flt -lm -o${EXECUTABLE}.elf ${OBJECTS}
 
-.PHONY: clean, all
+.PHONY: clean, all, upload
 all:
 	@echo "INCORRECT USAGE"
 	@echo "SELECT A CORRECT TARGET"
@@ -47,6 +47,9 @@ all:
 clean:
 	rm -f ${OBJECTS} ${LIGHT_SENSOR_OBJECTS} ${TEMPERATURE_SENSOR_OBJECTS}\
 		${DHT11_SENSOR_OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf
+
+upload:
+	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex
 
 light:
 	${CC} ${PHASE_ONE} ${LIGHT_SENSOR_FLAGS} ${BASE_CSOURCE} ${LIGHT_SENSOR_CSOURCE}
