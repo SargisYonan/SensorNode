@@ -58,27 +58,11 @@ light:
 	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
 	rm -f ${OBJECTS} ${EXECUTABLE}.elf
 
-#same as light but uses Windows compiler path instead
-wlight:
-	${CC} ${PHASE_ONE} ${LIGHT_SENSOR_FLAGS} ${BASE_CSOURCE} ${LIGHT_SENSOR_CSOURCE}
-	${CC} ${PHASE_TWO} ${LIGHT_SENSOR_OBJECTS}
-	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
-	${BURNER} -P ${WIN_COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
-	rm -f ${OBJECTS} ${EXECUTABLE}.elf
-
 temp:
 	${CC} ${PHASE_ONE} ${TEMPERATURE_SENSOR_FLAGS} ${BASE_CSOURCE} ${TEMPERATURE_SENSOR_CSOURCE}
 	${CC} ${PHASE_TWO} ${TEMPERATURE_SENSOR_OBJECTS}
 	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
 	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
-	rm -f ${OBJECTS} ${EXECUTABLE}.elf
-
-#same as temp but uses windows compiler path instead
-wtemp:
-	${CC} ${PHASE_ONE} ${TEMPERATURE_SENSOR_FLAGS} ${BASE_CSOURCE} ${TEMPERATURE_SENSOR_CSOURCE}
-	${CC} ${PHASE_TWO} ${TEMPERATURE_SENSOR_OBJECTS}
-	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
-	${BURNER} -P ${WIN_COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
 	rm -f ${OBJECTS} ${EXECUTABLE}.elf
 
 dht:
@@ -87,12 +71,3 @@ dht:
 	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
 	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
 	rm -f ${OBJECTS} ${EXECUTABLE}.elf
-
-#same as dht but uses windows compiler path instead
-wdht:
-	${CC} ${PHASE_ONE} ${DHT11_SENSOR_FLAGS} ${BASE_CSOURCE} ${DHT11_SENSOR_CSOURCE}
-	${CC} ${PHASE_TWO} ${DHT11_SENSOR_OBJECTS}
-	${OBJECT_COPY} -j .text -j .data -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
-	${BURNER} -P ${WIN_COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex 
-	rm -f ${OBJECTS} ${EXECUTABLE}.elf
-
