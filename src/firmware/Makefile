@@ -28,6 +28,14 @@ COMPILER  					 = stk500v2
 BAUDRATE					 = 115200
 OBJECT_COPY					 = avr-objcopy
 CFLAGS						 = -Wall -Werror -Wextra -Wimplicit -std=gnu99
+#Flags below
+# -Os for our delay library optimizations need to be turned on
+# -Wl,-u,vfprintf -lprintf_flt options to configure stdio for our purposes
+#  printf_flt is a printf that supports floating point values see
+#  http://www.nongnu.org/avr-libc/user-manual/group__avr__stdio.html#gaa3b98c0d17b35642c0f3e4649092b9f1
+# for other 'optimization options' see
+# http://www.nongnu.org/avr-libc/user-manual/using_tools.html#using_sel_gcc_opts
+#
 PHASE_ONE					 = -Os -mmcu=${AVR_GCC_CONTROLLER} -DF_CPU=16000000UL ${CFLAGS} -c
 PHASE_TWO					 = -mmcu=${AVR_GCC_CONTROLLER} -Wl,-u,vfprintf -lprintf_flt -lm -o${EXECUTABLE}.elf ${OBJECTS}
 
