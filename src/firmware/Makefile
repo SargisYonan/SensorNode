@@ -2,6 +2,22 @@ AVR_GCC_CONTROLLER           = atmega2560
 BURNER						 = avrdude
 AVRDUDE_CONTROLLER 	         = m2560
 CC							 = avr-gcc
+WINPORT = COM3
+MACPORT = /dev/tty.usbmodem1421
+LINPORT = /dev/ttyUSB0
+###### OS Detection ######
+ifeq ($(OS), Windows_NT)
+	PROGRAMMER_PATH = $(WINPORT)
+else
+	UNAME = $(shell uname -s)
+	ifeq ($(UNAME),Linux)
+		PROGRAMMER_PATH = $(LINPORT)
+	endif
+	ifeq ($(UNAME),Darwin)
+		PROGRAMMER_PATH = $(MACPORT)
+	endif
+endif
+
 
 ################################################################
 LIGHT_SENSOR_CSOURCE		= I2C_lib/i2c_master.c
@@ -22,8 +38,6 @@ DHT11_SENSOR_OBJECTS 		= DHT.o
 BASE_CSOURCE				 = main.c UART_LIBRARY/uart.c Sensor_Driver/driver.c
 OBJECTS  					 = main.o uart.o driver.o 
 EXECUTABLE					 = main
-COMPILER_PATH				 = /dev/tty.usbmodem1421
-WIN_COMPILER_PATH		 = //./COM3 #windows compiler path assuming it's running on COM3
 COMPILER  					 = stk500v2
 BAUDRATE					 = 115200
 OBJECT_COPY					 = avr-objcopy
@@ -49,7 +63,11 @@ clean:
 		${DHT11_SENSOR_OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf
 
 upload:
-	${BURNER} -P ${COMPILER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex
+ifndef PROGRAMMER_PATH
+	$(error "OS not configured in makefile: $(UNAME)")
+	exit 1
+endif
+	${BURNER} -P ${PROGRAMMER_PATH} -p ${AVRDUDE_CONTROLLER} -c ${COMPILER} -e -b ${BAUDRATE} -U flash:w:${EXECUTABLE}.hex
 
 light:
 	${CC} ${PHASE_ONE} ${LIGHT_SENSOR_FLAGS} ${BASE_CSOURCE} ${LIGHT_SENSOR_CSOURCE}
