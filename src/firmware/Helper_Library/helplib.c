@@ -6,7 +6,7 @@
 // high resolution delay you can have for some boards/setups
 // is 262.14 / (F_CPU / 1e6) so in otherwords, about 16.
 // This led me to decide that we should stick with 10ms/us delay
-// increments and thse #defines reflect this knowledge
+// increments and these #defines reflect this knowledge
 #define MAX_MS_DELAY 1e-2
 #define MAX_US_DELAY 1e-5
 
@@ -15,8 +15,8 @@
 #define MS_CHECK 1e2
 #define US_CHECK 1e5
 
-#define MILIVAL 1e3
-#define MICROVAL 1e6
+#define MILIVAL 1e-3
+#define MICROVAL 1e-6
 
 #define DELAY_INCREMENT 10
 
@@ -25,16 +25,16 @@
 // Utilizes lower order delay functions in a somewhat optimized
 // manner
 void custom_delay_sec(double _s) {
-	while (_s * MS_CHECK != (double) ((int)(_s * MS_CHECK))) {
-		// if there is less time left than DELAY_INCREMENT ms, run for that much time, else DELAY_INCREMENT ms
-		_delay_ms(DELAY_INCREMENT < _s * MILIVAL ? DELAY_INCREMENT : _s * MILIVAL);
-		if (_s -= MAX_MS_DELAY <= 0) return;
-	}
-	while (_s * US_CHECK != (double) ((int)(_s * US_CHECK))) {
-		// if there is less time left than DELAY_INCREMENT us, run for that much time, else DELAY_INCREMENT us
-		_delay_us(DELAY_INCREMENT < _s * MICROVAL ? DELAY_INCREMENT : _s * MICROVAL);
-		if (_s -= MAX_US_DELAY <= 0) return;
-	}
+  while (_s * US_CHECK != (double) ((int)(_s * US_CHECK))) {
+    // if there is less time left than DELAY_INCREMENT us, run for that much time, else DELAY_INCREMENT us
+    _delay_us(DELAY_INCREMENT * MICROVAl < _s ? DELAY_INCREMENT : _s / MICROVAL);
+    if (_s -= MAX_US_DELAY <= 0) return;
+  }
+  for(;;) {
+    // if there is less time left than DELAY_INCREMENT ms, run for that much time, else DELAY_INCREMENT ms
+    _delay_ms(DELAY_INCREMENT * MILIVAL < _s ? DELAY_INCREMENT : _s / MILIVAL);
+    if (_s -= MAX_MS_DELAY <= 0) return;
+  }
 }
 
 // The following was an attempt at a really fancy implementation
