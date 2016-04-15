@@ -15,6 +15,9 @@
 #define MS_CHECK 1e2
 #define US_CHECK 1e5
 
+#define MILIVAL 1e3
+#define MICROVAL 1e6
+
 #define DELAY_INCREMENT 10
 
 
@@ -24,12 +27,12 @@
 void custom_delay_sec(double _s) {
 	while (_s * MS_CHECK != (double) ((int)(_s * MS_CHECK))) {
 		// if there is less time left than DELAY_INCREMENT ms, run for that much time, else DELAY_INCREMENT ms
-		_delay_ms(DELAY_INCREMENT < _s * MS_CHECK ? DELAY_INCREMENT : _s * MS_CHECK);
+		_delay_ms(DELAY_INCREMENT < _s * MILIVAL ? DELAY_INCREMENT : _s * MILIVAL);
 		if (_s -= MAX_MS_DELAY <= 0) return;
 	}
 	while (_s * US_CHECK != (double) ((int)(_s * US_CHECK))) {
 		// if there is less time left than DELAY_INCREMENT us, run for that much time, else DELAY_INCREMENT us
-		_delay_us(DELAY_INCREMENT < _s * US_CHECK ? DELAY_INCREMENT : _s * US_CHECK);
+		_delay_us(DELAY_INCREMENT < _s * MICROVAL ? DELAY_INCREMENT : _s * MICROVAL);
 		if (_s -= MAX_US_DELAY <= 0) return;
 	}
 }
