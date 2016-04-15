@@ -35,8 +35,10 @@ DHT11_SENSOR_FLAGS			= -DDHT11 -DDEVICE_TYPE=0x03
 DHT11_SENSOR_OBJECTS 		= DHT.o
 ################################################################
 
+HELPER_CSOURCE 			= Helper_Library/helplib.c
+HELPER_OBJECTS 			= helplib.o
 BASE_CSOURCE				 = main.c UART_LIBRARY/uart.c Sensor_Driver/driver.c
-OBJECTS  					 = main.o uart.o driver.o 
+OBJECTS  					 = main.o uart.o driver.o
 EXECUTABLE					 = main
 COMPILER  					 = stk500v2
 BAUDRATE					 = 115200
@@ -60,7 +62,8 @@ all:
 
 clean:
 	rm -f ${OBJECTS} ${LIGHT_SENSOR_OBJECTS} ${TEMPERATURE_SENSOR_OBJECTS}\
-		${DHT11_SENSOR_OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf
+		${DHT11_SENSOR_OBJECTS} ${EXECUTABLE}.hex ${EXECUTABLE}.elf \
+		${HELPER_OBJECTS}
 
 upload:
 ifndef PROGRAMMER_PATH

@@ -1,8 +1,8 @@
 /*
-* A DRIVER BY SARGIS S YONAN ON 22 FEB 2016
-* USED FOR THE MICRO GRID TEST BED
-* GITHUB.COM/SARGISYONAN -- SARGISY@GMAIL.COM
-*/
+ * A DRIVER BY SARGIS S YONAN ON 22 FEB 2016
+ * USED FOR THE MICRO GRID TEST BED
+ * GITHUB.COM/SARGISYONAN -- SARGISY@GMAIL.COM
+ */
 #include "Sensor_Driver/driver.h"
 
 #ifdef I2C_LIGHT_SENSOR
@@ -21,21 +21,21 @@ UPDATE_SENSOR_MEASUREMENT() return 0
 
 #include "UART_LIBRARY/uart.h"
 #include "sensor_lib/sensor_settings.h"
-
+#include "Helper_Library/helplib.h"
 ///////////////////////////////////////
 
 int main(void)
 {
-	if (SystemInit())	// DEFINED IN driver.h
-	{
-		do 
-		{	
-			UPDATE_SENSOR_MEASUREMENT();
-			if (RX_TX_FUNCTION_available() >= 1) ProcessCommand();						// if commands are in the receiving buffer
-			if (ENABLED) SEND_CURRENT_SENSOR_VALUE();
-		} 
-		while(true);		// embedded system; does not return from main()
-	}
-	return 0;
+  if (SystemInit()) // DEFINED IN driver.h
+  {
+    do
+    {
+      UPDATE_SENSOR_MEASUREMENT();
+      if (RX_TX_FUNCTION_available() >= 1) ProcessCommand();            // if commands are in the receiving buffer
+      if (ENABLED) SEND_CURRENT_SENSOR_VALUE();
+    }
+    while(true);    // embedded system; does not return from main()
+  }
+  return 0;
 }
 
