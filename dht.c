@@ -14,6 +14,7 @@
 #include "dht.h"
 #include <avr/io.h>
 #include <util/delay.h>
+#include <util/atomic.h>
 #include <avr/interrupt.h>
 
 
@@ -48,44 +49,44 @@ static uint8_t dht_read(struct dht22 *dht)
     DDR_DHT |= (1 << dht->pin);
     PORT_DHT &= ~(1 << dht->pin);
     _delay_ms(20);
-    cli();
-    PORT_DHT |= (1 << dht->pin);
-    _delay_us(40);
-    DDR_DHT &= ~(1 << dht->pin);
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        PORT_DHT |= (1 << dht->pin);
+        _delay_us(40);
+        DDR_DHT &= ~(1 << dht->pin);
 
-    /* Read the timings */
-    for (i = 0; i < DHT_MAXTIMINGS; i++) {
-        counter = 0;
-        while (1) {
-            tmp = ((PIN_DHT & (1 << dht->pin)) >> 1);
-            _delay_us(3);
+        /* Read the timings */
+        for (i = 0; i < DHT_MAXTIMINGS; i++) {
+            counter = 0;
+            while (1) {
+                tmp = ((PIN_DHT & (1 << dht->pin)) >> 1);
+                _delay_us(3);
 
-            if (tmp != last_state)
-                break;
+                if (tmp != last_state)
+                    break;
 
-            counter++;
-            _delay_us(1);
+                counter++;
+                _delay_us(1);
+
+                if (counter == 255)
+                    break;
+            }
+
+            last_state = ((PIN_DHT & (1 << dht->pin)) >> 1);
 
             if (counter == 255)
                 break;
-        }
 
-        last_state = ((PIN_DHT & (1 << dht->pin)) >> 1);
-
-        if (counter == 255)
-            break;
-
-        /* Ignore first 3 transitions */
-        if ((i >= 4) && (i % 2 == 0)) {
-            /* Shove each bit into the storage bytes */
-            dht->data[j/8] <<= 1;
-            if (counter > DHT_COUNT)
-                dht->data[j/8] |= 1;
-            j++;
+            /* Ignore first 3 transitions */
+            if ((i >= 4) && (i % 2 == 0)) {
+                /* Shove each bit into the storage bytes */
+                dht->data[j/8] <<= 1;
+                if (counter > DHT_COUNT)
+                    dht->data[j/8] |= 1;
+                j++;
+            }
         }
     }
-
-    sei();
     sum = dht->data[0] + dht->data[1] + dht->data[2] + dht->data[3];
 
     if ((j >= 40) && (dht->data[4] == (sum & 0xFF)))

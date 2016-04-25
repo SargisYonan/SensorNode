@@ -19,6 +19,7 @@ CFLAGS+=-Wstrict-prototypes
 CFLAGS+=-Wundef
 CFLAGS+=-Wunreachable-code
 CFLAGS+=-Wsign-compare
+CFLAGS+=$(CSTANDARD)
 CFLAGS+=-Wa,-adhlns=$(<:%.c=%.lst)
 LDFLAGS=-Wl,-Map=$(TARGET).map,--cref
 LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
