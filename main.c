@@ -35,11 +35,11 @@ main(void){
     printf(PSTR("DHT22 initialized...\r\n"));
     printf("Pin %d\r\n", d.pin);
     for(;;){
-        _delay_ms(2000);
         if(dht_read_data(&d, &temp, &hum)){
             printf_P(PSTR("SUCCESS\r\nTemperature %0.2f\r\nHumidity %0.2f\r\n"), temp, hum);
         } else {
             printf_P(PSTR("FAILURE\r\n"));
         }
+        _delay_ms(2000);
     }
 }
