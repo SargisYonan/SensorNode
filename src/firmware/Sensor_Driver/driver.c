@@ -12,7 +12,7 @@
 #include "../sensor_lib/sensor_settings.h"
 #include "../RX_TX/commands.h"
 #ifdef I2C_LIGHT_SENSOR
-#include "../I2C_lib/i2c_master.h"
+#include "../I2C_lib_new/I2C_lib.h"
 #elif ONE_WIRE_TEMP_SENS
 #include "../OneWire/OneWire.h"
 #elif DHT11
@@ -60,10 +60,9 @@ bool SystemInit(void)
    	Sensor->deviceType = DEVICE_TYPE;
    	Sensor->status = 0x00;
    	#ifdef I2C_LIGHT_SENSOR
-	i2c_start(I2C_LOW_ADDRESS);
-	i2c_transmit(I2C_LOW_ADDRESS, &txData, 1);
-	Sensor->currentValue[0] = 0;
-	Sensor->currentValue[1] = 0;
+	uint16_t lightread = I2CReadValue();
+	Sensor->currentValue[0] = (lightread & 0xFF00) >> 8;
+	Sensor->currentValue[1] = lightread & 0xFF;
    	#elif ONE_WIRE_TEMP_SENS
    	Sensor->currentValue = 0.0;
    	#elif DHT11

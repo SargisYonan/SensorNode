@@ -20,9 +20,9 @@ endif
 
 
 ################################################################
-LIGHT_SENSOR_CSOURCE		= I2C_lib/i2c_master.c
+LIGHT_SENSOR_CSOURCE		= I2C_lib_new/I2C_lib.c I2C_lib_new/twimaster.c
 LIGHT_SENSOR_FLAGS			= -DI2C_LIGHT_SENSOR -DDEVICE_TYPE=0x01
-LIGHT_SENSOR_OBJECTS 		= i2c_master.o
+LIGHT_SENSOR_OBJECTS 		= I2C_lib.o twimaster.o
 ################################################################
 ################################################################
 TEMPERATURE_SENSOR_CSOURCE		= OneWire/OneWire.c
