@@ -28,14 +28,6 @@ int main(void)
 {
 	if (SystemInit()) // DEFINED IN driver.h
 	{
-		uart_init(BAUDRATE);
-		I2CInit();
-		while(1) {
-			char temp[101] = {};
-			sprintf(temp, "The current light reading is %d", I2CReadValue());
-			uart_puts(temp);
-			for (int i = 0; i < 100; i++) _delay_ms(10);
-		}
 		do
 		{
 			UPDATE_SENSOR_MEASUREMENT();
