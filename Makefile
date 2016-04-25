@@ -20,8 +20,6 @@ CFLAGS+=-Wundef
 CFLAGS+=-Wunreachable-code
 CFLAGS+=-Wsign-compare
 CFLAGS+=-Wa,-adhlns=$(<:%.c=%.lst)
-CPPFLAGS=-fno-exceptions
-CPPFLAGS+=-g -Wall -mcall-prologues
 LDFLAGS=-Wl,-Map=$(TARGET).map,--cref
 LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 
