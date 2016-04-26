@@ -83,9 +83,12 @@ static uint8_t dht_read(struct dht22 *dht)
         for (i = 0; i < DHT_MAXTIMINGS; i++) {
             counter = 0;
             while (1) {
-                tmp = ((PIN_DHT & _BV(BIT_DHT)) >> 1);
+                tmp = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
                 _delay_us(3);
 
+                /* bus has transitioned from high->low
+                 * or low->high
+                 */
                 if (tmp != last_state)
                     break;
 
@@ -96,7 +99,7 @@ static uint8_t dht_read(struct dht22 *dht)
                     break;
             }
 
-            last_state = ((PIN_DHT & _BV(BIT_DHT)) >> 1);
+            last_state = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
 
             if (counter == 255)
                 break;

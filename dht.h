@@ -22,7 +22,7 @@
 #define DDR_DHT DDRC
 #define PORT_DHT PORTC
 #define PIN_DHT PINC
-#define BIT_DHT PC1
+#define BIT_DHT PC0
 
 struct dht22 {
     uint8_t data[6];    /* data from sensor store here */
