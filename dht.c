@@ -63,7 +63,8 @@ static uint8_t dht_read(struct dht22 *dht)
     //perhaps add to atomic block
     DDR_DHT |= _BV(BIT_DHT);
     PORT_DHT &= ~_BV(BIT_DHT);
-    _delay_ms(20); //20x minimum delay seems excessive
+    //_delay_ms(20); //20x minimum delay seems excessive
+    _delay_ms(2);
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         /* 
