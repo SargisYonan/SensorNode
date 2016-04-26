@@ -36,7 +36,7 @@ main(void){
     printf("Pin %d\r\n", BIT_DHT);
     for(;;){
         if(dht_read_data(&d, &temp, &hum)){
-            printf_P(PSTR("SUCCESS\r\nTemperature %0.2f\r\nHumidity %0.2f\r\n"), temp, hum);
+            printf_P(PSTR("Temperature %0.01fC\t\tHumidity %0.01f%%\r\n\r\n"), temp, hum);
         } else {
             printf_P(PSTR("FAILURE\r\n"));
         }
