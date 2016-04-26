@@ -82,6 +82,9 @@ static uint8_t dht_read(struct dht22 *dht)
         /* Read the timings */
         for (i = 0; i < DHT_MAXTIMINGS; i++) {
             counter = 0;
+            /*
+             * watch the bus, until it transitions to a new state
+             */
             while (1) {
                 tmp = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
                 _delay_us(3);
@@ -95,12 +98,14 @@ static uint8_t dht_read(struct dht22 *dht)
                 counter++;
                 _delay_us(1);
 
+                /* timeout has occured */
                 if (counter == 255)
                     break;
             }
 
             last_state = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
 
+            /* finish timeout exit */
             if (counter == 255)
                 break;
 
