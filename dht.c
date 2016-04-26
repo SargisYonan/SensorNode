@@ -68,17 +68,13 @@ static uint8_t dht_read(struct dht22 *dht)
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         /* 
-         * reset bus
+         * release bus
          */
-        PORT_DHT |= _BV(BIT_DHT);
+        DDR_DHT &= ~_BV(BIT_DHT);
         /*
          * DHT waits 20-40us before response
          */
-        //we should set the bus to input to release the bus before the delay
-        //the pullup resistor will handle the BUS=1 condition and prevent the DHT
-        //from fighting a high impedance condition
-        _delay_us(40);
-        DDR_DHT &= ~_BV(BIT_DHT);
+        _delay_us(20);
 
         /* Read the timings */
         for (i = 0; i < DHT_MAXTIMINGS; i++) {
