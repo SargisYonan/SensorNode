@@ -22,10 +22,11 @@
 #define DDR_DHT DDRC
 #define PORT_DHT PORTC
 #define PIN_DHT PINC
+#define BIT_DHT PC1
 
 struct dht22 {
     uint8_t data[6];    /* data from sensor store here */
-    uint8_t pin;        /* DDR & PORT pin */
+//    uint8_t pin;        /* DDR & PORT pin */
 };
 
 /**
@@ -33,7 +34,8 @@ struct dht22 {
  * @dht: sensor struct
  * @pin: PORT & DDR pin
  */
-void dht_init(struct dht22 *dht, uint8_t pin);
+//void dht_init(struct dht22 *dht, uint8_t pin);
+void dht_init(struct dht22 *dht);
 
 /**
  * Reading temperature from sensor

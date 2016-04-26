@@ -2,6 +2,9 @@
  *
  * Copyright (C) 2015 Sergey Denisov.
  * Written by Sergey Denisov aka LittleBuster (DenisovS21@gmail.com)
+ * Modified By Zachary Graham (zwgraham@soe.ucsc.edu)
+ * * Uses AVR-LIBC ATOMIC_BLOCK
+ * * Chagned run-time pin definition to compile-time
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public Licence
@@ -22,12 +25,19 @@
 #define DHT_MAXTIMINGS 85
 
 
-void dht_init(struct dht22 *dht, uint8_t pin)
+//void dht_init(struct dht22 *dht, uint8_t pin)
+void dht_init(struct dht22 *dht)
 {
-    dht->pin = pin;
+//    dht->pin = BIT_DHT
     /* Setup the pins! */
-    DDR_DHT &= ~(1 << dht->pin);
-    PORT_DHT |= (1 << dht->pin);
+    DDR_DHT &= ~_BV(BIT_DHT);
+    PORT_DHT |= _BV(BIT_DHT);
+    dht->data[0] = 0;
+    dht->data[1] = 0;
+    dht->data[2] = 0;
+    dht->data[3] = 0;
+    dht->data[4] = 0;
+    dht->data[5] = 0;
 }
 
 static uint8_t dht_read(struct dht22 *dht)
@@ -40,26 +50,40 @@ static uint8_t dht_read(struct dht22 *dht)
     /*
      * Pull the pin 1 and wait 250 milliseconds
      */
-    PORT_DHT |= (1 << dht->pin);
-    _delay_ms(250);
-
+//    PORT_DHT |= _BV(BIT_DHT);
+//    _delay_ms(250);
+// this is unneccessary?
+    /* clear previously recieved data */
     dht->data[0] = dht->data[1] = dht->data[2] = dht->data[3] = dht->data[4] = 0;
 
-    /* Now pull it low for ~20 milliseconds */
-    DDR_DHT |= (1 << dht->pin);
-    PORT_DHT &= ~(1 << dht->pin);
-    _delay_ms(20);
+    /* 
+     * Send start condition to DHT
+     *     BUS=0 for at least 1ms
+     */
+    //perhaps add to atomic block
+    DDR_DHT |= _BV(BIT_DHT);
+    PORT_DHT &= ~_BV(BIT_DHT);
+    _delay_ms(20); //20x minimum delay seems excessive
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        PORT_DHT |= (1 << dht->pin);
+        /* 
+         * reset bus
+         */
+        PORT_DHT |= _BV(BIT_DHT);
+        /*
+         * DHT waits 20-40us before response
+         */
+        //we should set the bus to input to release the bus before the delay
+        //the pullup resistor will handle the BUS=1 condition and prevent the DHT
+        //from fighting a high impedance condition
         _delay_us(40);
-        DDR_DHT &= ~(1 << dht->pin);
+        DDR_DHT &= ~_BV(BIT_DHT);
 
         /* Read the timings */
         for (i = 0; i < DHT_MAXTIMINGS; i++) {
             counter = 0;
             while (1) {
-                tmp = ((PIN_DHT & (1 << dht->pin)) >> 1);
+                tmp = ((PIN_DHT & _BV(BIT_DHT)) >> 1);
                 _delay_us(3);
 
                 if (tmp != last_state)
@@ -72,7 +96,7 @@ static uint8_t dht_read(struct dht22 *dht)
                     break;
             }
 
-            last_state = ((PIN_DHT & (1 << dht->pin)) >> 1);
+            last_state = ((PIN_DHT & _BV(BIT_DHT)) >> 1);
 
             if (counter == 255)
                 break;

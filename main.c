@@ -31,9 +31,9 @@ main(void){
     struct dht22 d;
     stdout = &uart_dev;
     uart0_init();
-    dht_init(&d, 1);
+    dht_init(&d);
     printf(PSTR("DHT22 initialized...\r\n"));
-    printf("Pin %d\r\n", d.pin);
+    printf("Pin %d\r\n", BIT_DHT);
     for(;;){
         if(dht_read_data(&d, &temp, &hum)){
             printf_P(PSTR("SUCCESS\r\nTemperature %0.2f\r\nHumidity %0.2f\r\n"), temp, hum);
