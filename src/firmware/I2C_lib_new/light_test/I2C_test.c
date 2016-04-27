@@ -22,7 +22,7 @@
 #include <util/delay.h>
 #define BAUD 19200
 #include <util/setbaud.h>
-#include "i2cmaster.h"
+#include "../i2cmaster.h"
 
 
 /* 
