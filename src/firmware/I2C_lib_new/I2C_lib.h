@@ -39,4 +39,20 @@
  */
 uint16_t I2CReadValue();
 
+/*
+ * Temporary function to initialize uart usage as well as I2C usage
+ */
+void I2CUartPrintInit();
+
+/*
+ * Same as I2CReadValue() but also prints to uart
+ */
+uint16_t I2CUartPrint();
+
+
+/*
+ * Runs the light based actuation demo
+ */
+void I2CDemo();
+
 #endif //_I2C_LIB_H_

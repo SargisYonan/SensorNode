@@ -60,10 +60,12 @@ bool SystemInit(void)
    	Sensor->deviceType = DEVICE_TYPE;
    	Sensor->status = 0x00;
    	#ifdef I2C_LIGHT_SENSOR
+/*
 	uint16_t lightread = I2CReadValue();
 	Sensor->currentValue[0] = (lightread & 0xFF00) >> 8;
 	Sensor->currentValue[1] = lightread & 0xFF;
-   	#elif ONE_WIRE_TEMP_SENS
+*/
+	#elif ONE_WIRE_TEMP_SENS
    	Sensor->currentValue = 0.0;
    	#elif DHT11
 	initDHT();

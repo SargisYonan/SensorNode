@@ -7,8 +7,7 @@
 
 #ifdef I2C_LIGHT_SENSOR
 #include "I2C_lib_new/I2C_lib.h"
-#define UPDATE_SENSOR_MEASUREMENT() //i2c_receive(I2C_LOW_ADDRESS, Sensor->currentValue, 2)
-
+#define UPDATE_SENSOR_MEASUREMENT() I2CDemo()
 #elif ONE_WIRE_TEMP_SENS
 #include "OneWire/OneWire.h"
 #define UPDATE_SENSOR_MEASUREMENT() Sensor->currentValue = getTemperatureC();
@@ -28,14 +27,6 @@ int main(void)
 {
 	if (SystemInit()) // DEFINED IN driver.h
 	{
-		I2CInit();
-		uart_init(BAUDRATE);
-		for (;;) {
-			uint16_t temp = I2CReadValue();
-			char temps[1024] = {};
-			sprintf(temps, "%d", temp);
-			uart_puts(temps);
-		}
 		do
 		{
 			UPDATE_SENSOR_MEASUREMENT();
