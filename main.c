@@ -26,7 +26,7 @@ uart0_putc(uint8_t c){
     UDR0 = c;
 }*/
 
-void
+static void
 serial_init(void){
     uart_init(UART_BAUD_SELECT(UART_BAUD, F_CPU));
 }
