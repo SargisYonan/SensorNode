@@ -19,10 +19,10 @@
 /*
  * Sensor's port
  */
-#define DDR_DHT DDRC
-#define PORT_DHT PORTC
-#define PIN_DHT PINC
-#define BIT_DHT PC0
+#define DHT_DDR DDRC
+#define DHT_PORT PORTC
+#define DHT_PIN PINC
+#define DHT_BIT PC0
 
 struct dht22 {
     uint8_t data[6];    /* data from sensor store here */

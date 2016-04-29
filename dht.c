@@ -28,10 +28,10 @@
 //void dht_init(struct dht22 *dht, uint8_t pin)
 void dht_init(struct dht22 *dht)
 {
-//    dht->pin = BIT_DHT
+//    dht->pin = DHT_BIT
     /* Setup the pins! */
-    DDR_DHT &= ~_BV(BIT_DHT);
-    PORT_DHT |= _BV(BIT_DHT);
+    DHT_DDR &= ~_BV(DHT_BIT);
+    DHT_PORT |= _BV(DHT_BIT);
     dht->data[0] = 0;
     dht->data[1] = 0;
     dht->data[2] = 0;
@@ -50,7 +50,7 @@ static uint8_t dht_read(struct dht22 *dht)
     /*
      * Pull the pin 1 and wait 250 milliseconds
      */
-//    PORT_DHT |= _BV(BIT_DHT);
+//    DHT_PORT |= _BV(DHT_BIT);
 //    _delay_ms(250);
 // this is unneccessary?
     /* clear previously recieved data */
@@ -61,8 +61,8 @@ static uint8_t dht_read(struct dht22 *dht)
      *     BUS=0 for at least 1ms
      */
     //perhaps add to atomic block
-    DDR_DHT |= _BV(BIT_DHT);
-    PORT_DHT &= ~_BV(BIT_DHT);
+    DHT_DDR |= _BV(DHT_BIT);
+    DHT_PORT &= ~_BV(DHT_BIT);
     //_delay_ms(20); //20x minimum delay seems excessive
     _delay_ms(2);
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
@@ -70,7 +70,7 @@ static uint8_t dht_read(struct dht22 *dht)
         /* 
          * release bus
          */
-        DDR_DHT &= ~_BV(BIT_DHT);
+        DHT_DDR &= ~_BV(DHT_BIT);
         /*
          * DHT waits 20-40us before response
          */
@@ -83,7 +83,7 @@ static uint8_t dht_read(struct dht22 *dht)
              * watch the bus, until it transitions to a new state
              */
             while (1) {
-                tmp = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
+                tmp = (DHT_PIN & _BV(DHT_BIT)) ? 1 : 0;
                 _delay_us(3);
 
                 /* bus has transitioned from high->low
@@ -100,7 +100,7 @@ static uint8_t dht_read(struct dht22 *dht)
                     break;
             }
 
-            last_state = (PIN_DHT & _BV(BIT_DHT)) ? 1 : 0;
+            last_state = (DHT_PIN & _BV(DHT_BIT)) ? 1 : 0;
 
             /* finish timeout exit */
             if (counter == 255)
