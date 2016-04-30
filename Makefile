@@ -8,6 +8,8 @@ RM=rm -f
 F_CPU=16000000UL
 CDEFS=-DF_CPU=$(F_CPU)
 CDEFS+=-DUART_TX_BUFFER_SIZE=16
+CDEFS+=-DUART_RX_BUFFER_SIZE=16
+CDEFS+=-DDHT_SENSOR
 OPT=s
 CSTANDARD=-std=gnu99
 MCU=atmega2560
@@ -36,8 +38,8 @@ all: $(TARGET).hex
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
 
-$(TARGET).elf: main.o dht.o uart.o
-	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o dht.o uart.o -o $(TARGET).elf
+$(TARGET).elf: main.o dht.o uart.o parser.o
+	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o dht.o uart.o parser.o -o $(TARGET).elf
 
 dht.o: dht.c dht.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c dht.c
@@ -47,6 +49,9 @@ main.o: main.c dht.h
 
 uart.o: uart.c uart.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c uart.c
+
+parser.o: parser.c parser.h uart.h
+	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c parser.c
 
 clean:
 	$(RM) $(TARGET).elf $(TARGET).hex *.o $(TARGET).map *.lst
