@@ -47,7 +47,7 @@ $(TARGET).elf: main.o dht.o uart.o parser.o
 dht.o: dht.c dht.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c dht.c
 
-main.o: main.c dht.h
+main.o: main.c dht.h uart_macros.h uart.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c main.c
 
 uart.o: uart.c uart.h

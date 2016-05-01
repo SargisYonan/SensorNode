@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "parser.h"
 #include "uart.h"
+#include "uart_macros.h"
 #include <string.h>
 
 char uart_buffer[UART_RX_BUFFER_SIZE];
@@ -10,7 +11,7 @@ uint8_t pb_index=0;
 
 void process_uart(void){
     uint16_t c;
-    c = uart_getc();
+    c = RADIO_GETC();
     if( (c & UART_FRAME_ERROR) ||
         (c & UART_OVERRUN_ERROR) ||
         (c & UART_BUFFER_OVERFLOW) ){

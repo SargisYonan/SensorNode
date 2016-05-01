@@ -8,29 +8,8 @@
 #include <avr/interrupt.h>
 #include "dht.h"
 #include "uart.h"
+#include "uart_macros.h"
 #include "parser.h"
-
-#define RADIO_BAUD 19200
-#define DEBUG_BAUD 115200
-#define DEBUG_UART   uart
-#define RADIO_UART   uart1
-/* only the above macros should be edited for configuration purposes */
-#define xCONCAT(a, b) a##b
-#define CONCAT(a, b) xCONCAT(a, b)
-#define INIT _init
-#define PUTS _puts
-#define PUTS_p _puts_p
-#define PUTS_P _puts_P
-
-#define RADIO_INIT   CONCAT(RADIO_UART, INIT)
-#define RADIO_PUTS   CONCAT(RADIO_UART, PUTS)
-#define RADIO_PUTS_p CONCAT(RADIO_UART, PUTS_p)
-#define RADIO_PUTS_P CONCAT(RADIO_UART, PUTS_P)
-#define DEBUG_INIT   CONCAT(DEBUG_UART, INIT)
-#define DEBUG_PUTS   CONCAT(DEBUG_UART, PUTS)
-#define DEBUG_PUTS_p CONCAT(DEBUG_UART, PUTS_p)
-#define DEBUG_PUTS_P CONCAT(DEBUG_UART, PUTS_P)
-
 
 static void
 serial_init(void){
