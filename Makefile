@@ -53,7 +53,7 @@ main.o: main.c dht.h uart_macros.h uart.h
 uart.o: uart.c uart.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c uart.c
 
-parser.o: parser.c parser.h uart.h
+parser.o: parser.c parser.h uart.h uart_macros.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c parser.c
 
 clean:

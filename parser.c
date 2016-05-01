@@ -29,6 +29,11 @@ void process_uart(void){
             parser_flags.command_recieved=1;
             memcpy(parser_buffer, uart_buffer, pb_index);
             parser_buffer[pb_index]=0;
+#ifdef DEBUG
+            DEBUG_PUTS_P("Command Recieved: ");
+            DEBUG_PUTS(parser_buffer);
+            DEBUG_PUTS_P("\r\n");
+#endif /* DEBUG */
             pb_index=0;
             /* 
              * resetting the index should allow us to avoid 
