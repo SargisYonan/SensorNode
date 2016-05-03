@@ -29,11 +29,17 @@ main(void){
     serial_init();
     dht_init(&d);
     sei();
+#ifdef DEBUG
+    DEBUG_PUTS_P("MAIN: Initialization complete, ready to recieve commands\r\n");
+#endif
     for(;;){
         process_uart();
         if( parser_flags.command_recieved ){
             parser_flags.command_recieved=0;
             parse_command();
+#ifdef DEBUG
+            DEBUG_PUTS_P("MAIN: Command recieved, parsing...\r\n");
+#endif
         }
         if( parser_flags.command_error ){
             /* send error message */

@@ -30,7 +30,7 @@ void process_uart(void){
             memcpy(parser_buffer, uart_buffer, pb_index);
             parser_buffer[pb_index]=0;
 #ifdef DEBUG
-            DEBUG_PUTS_P("Command Recieved: ");
+            DEBUG_PUTS_P("Process_Uart: detected newline character\r\n\tcommand: ");
             DEBUG_PUTS(parser_buffer);
             DEBUG_PUTS_P("\r\n");
 #endif /* DEBUG */
