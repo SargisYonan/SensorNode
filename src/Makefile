@@ -1,5 +1,7 @@
 PROGRAMMER=avrdude
-PROGRAMMER_PORT=/dev/ttyACM0
+LINPORT=/dev/ttyACM0
+MACPORT=/dev/tty.usbmodem1421
+WINPORT=COM3
 CC=avr-gcc
 CPP=avr-g++
 TARGET=main
@@ -34,6 +36,21 @@ LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
+######## OS Detection #########
+ifeq ($(OS), Windows_NT)
+	PROGRAMMER_PATH = $(WINPORT)
+else
+	UNAME = $(shell uname -s)
+	ifeq ($(UNAME),Linux)
+		PROGRAMMER_PATH=$(LINPORT)
+	else
+		ifeq ($(UNAME),Darwin)
+			PROGRAMMER_PATH=$(MACPORT)
+		endif
+	endif
+endif
+
+####### Targets ########
 .PHONY: clean, upload
 
 all: $(TARGET).hex
@@ -60,4 +77,8 @@ clean:
 	$(RM) $(TARGET).elf $(TARGET).hex *.o $(TARGET).map *.lst
 
 upload:
-	$(PROGRAMMER) -P $(PROGRAMMER_PORT) -p $(MCU) -c stk500v2 -e -b 115200 -U flash:w:$(TARGET).hex
+ifndef PROGRAMMER_PATH
+	$(error "OS not configured in makefile: $(UNAME)")
+	exit 1
+endif
+	$(PROGRAMMER) -P $(PROGRAMMER_PATH) -p $(MCU) -c stk500v2 -e -b 115200 -U flash:w:$(TARGET).hex
