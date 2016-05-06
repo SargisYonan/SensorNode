@@ -32,33 +32,35 @@
  * May contain additional setup functionality in the future
  * Currently exists to keep consistent naming scheme
  */
-#define I2CInit i2c_init
+#define I2CInit(void) i2c_init()
 
 /*
  * Handles all details of reading the sensor value
  */
-uint16_t I2CReadValue();
+uint16_t I2CReadValue(void);
 
 /*
  * DO NOT USE THE BELOW FUNCTIONS
  */
 
-#ifdef DONOTUSE
+
+
+//#ifdef DONOTUSE
 /*
  * Temporary function to initialize uart usage as well as I2C usage
  */
-void I2CUartPrintInit();
+void I2CUartPrintInit(void);
 
 /*
  * Same as I2CReadValue() but also prints to uart
  */
-uint16_t I2CUartPrint();
+uint16_t I2CUartPrint(void);
 
 
 /*
  * Runs the light based actuation demo
  */
-void I2CDemo();
-#endif //DONOTUSE
+void I2CDemo(void);
+//#endif //DONOTUSE
 
 #endif //_I2C_LIB_H_
