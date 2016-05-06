@@ -11,7 +11,8 @@ F_CPU=16000000UL
 CDEFS=-DF_CPU=$(F_CPU)
 CDEFS+=-DUART_TX_BUFFER_SIZE=16
 CDEFS+=-DUART_RX_BUFFER_SIZE=16
-CDEFS+=-DDHT_SENSOR
+#CDEFS+=-DDHT_SENSOR
+CDEFS+=-DLIGHT_SENSOR
 ifdef DEBUG
 	CDEFS+=-DDEBUG
 endif
@@ -58,8 +59,8 @@ all: $(TARGET).hex
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
 
-$(TARGET).elf: main.o dht.o uart.o parser.o
-	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o dht.o uart.o parser.o -o $(TARGET).elf
+$(TARGET).elf: main.o I2C_lib.o twimaster.o uart.o parser.o
+	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o I2C_lib.o twimaster.o uart.o parser.o -o $(TARGET).elf
 
 dht.o: dht.c dht.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c dht.c
@@ -72,6 +73,12 @@ uart.o: uart.c uart.h
 
 parser.o: parser.c parser.h uart.h uart_macros.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c parser.c
+
+twimaster.o: twimaster.c i2cmaster.h
+	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c twimaster.c
+
+I2C_lib.o: I2C_lib.c I2C_lib.h
+	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c I2C_lib.c
 
 clean:
 	$(RM) $(TARGET).elf $(TARGET).hex *.o $(TARGET).map *.lst
