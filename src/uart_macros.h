@@ -1,7 +1,7 @@
 #ifndef _UART_MACROS_H_
-    #define _UART_MACROS_H_
+#define _UART_MACROS_H_
 
-/* 
+/*
  * UART Configuration Macros and Shortcuts
  * The Following macros are for UART configuration
  * and access shortcuts
@@ -14,6 +14,12 @@
 #define DEBUG_BAUD 115200
 #define DEBUG_UART   uart
 #define RADIO_UART   uart1
+
+#ifdef NORADIO
+#undef DEBUG
+#undef RADIO_UART
+#define RADIO_UART uart
+#endif // NORADIO
 
 /*
  * This next block of macros are to aid in making the UART
@@ -31,9 +37,9 @@
  * UART ACCCESS SHORTCUTS *
  **************************/
 /* Initialize named UART
- * X_INIT(UBRRVALUES) 
+ * X_INIT(UBRRVALUES)
  * the easiest way to run is with the uart libary
- * macros: 
+ * macros:
  *     UART_BAUD_SELECT(baudRate, xtalCpu)
  *  or
  *     UART_BAUD_SELECT_DOUBLE_SPEED(baudRate, xtalCpu)
@@ -43,7 +49,7 @@
 /* Write string to named UART
  * X_PUTS(char *string)
  * X_PUTS_p(const char *progmem_string)
- * X_PUTS_P(const char *string) -> X_PUTS_p(PSTR(*string)) 
+ * X_PUTS_P(const char *string) -> X_PUTS_p(PSTR(*string))
  * see also: uart.h
  */
 #define RADIO_PUTS   CONCAT(RADIO_UART, PUTS)
