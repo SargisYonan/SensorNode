@@ -38,7 +38,7 @@ main(void){
 	dht_init(&d);
 #endif // DHT_SENSOR
 #ifdef TEMP_SENSOR
-	// not yet ready
+	float temp;
 #endif // TEMP_SENSOR
 #ifdef LIGHT_SENSOR
 	uint16_t light;
@@ -80,9 +80,8 @@ main(void){
 		}
 #endif // DHT_SENSOR
 #ifdef TEMP_SENSOR
-		// not yet ready
 		if( parser_flags.measure_temperature){
-			//dht_read_data( &d, &temp, &hum);
+			temp = getTemperatureC();
 			sprintf_P(buf, PSTR("T=%0.2f\r\n"), temp);
 #ifdef DEBUG
 			DEBUG_PUTS_P("MAIN: measure_temperature\r\n");
