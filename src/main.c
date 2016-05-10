@@ -29,9 +29,15 @@ serial_init(void){
 
 #define COMMAND_ERROR "BAD COMMAND\r\n"
 
+#define LED PB7
+#define LEDDDR DDRB
+#define LEDPORT PORTB
+
 int
 main(void){
    char buf[16];
+   uint32_t ledcount = 0; // counter to slow down LED access
+	LEDDDR |= _BV(LED);
 #ifdef DHT_SENSOR
    float hum, temp;
    struct dht22 d;
@@ -148,6 +154,14 @@ main(void){
       if(buf[0]){
          RADIO_PUTS(buf);
          buf[0]='\0';
+      }
+      if (ledcount-- <= 0) {
+         ledcount = F_CPU / 1e2;
+#ifdef LIGHT_SENSOR
+         light = I2CReadValue();
+         if (light <= parser_flags.var_setpoint * 0.8) LEDPORT |= _BV(LED);
+         else if (light >= parser_flags.var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
+#endif //LIGHT_SENSOR
       }
    }
 }
