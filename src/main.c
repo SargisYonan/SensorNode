@@ -70,13 +70,8 @@ main(void){
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: parser_flags.command_error=1\r\n");
 #endif
-            <<<<<<< HEAD
-                RADIO_PUTS_P(COMMAND_ERROR);
+            RADIO_PUTS_P(COMMAND_ERROR);
         }
-        =======
-            uart_puts_P(COMMAND_ERROR);
-    }
-    >>>>>>> 5fd0172... Re-tabbed code
 #ifdef DHT_SENSOR
         if( parser_flags.measure_temperature &&
                 parser_flags.measure_humidity ){
