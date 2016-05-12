@@ -36,6 +36,7 @@ serial_init(void){
 int
 main(void){
     char buf[16];
+    buf[0] = '\0';
     uint32_t ledcount = 0; // counter to slow down LED access
     LEDDDR |= _BV(LED);
 #ifdef DHT_SENSOR

@@ -11,7 +11,7 @@
  * Configuration Macros   *
  **************************/
 #define RADIO_BAUD 19200
-#define DEBUG_BAUD 115200
+#define DEBUG_BAUD 19200
 #define DEBUG_UART   uart
 #define RADIO_UART   uart1
 
@@ -53,10 +53,8 @@
  * see also: uart.h
  */
 #define RADIO_PUTS   CONCAT(RADIO_UART, PUTS)
-#define RADIO_PUTS_p CONCAT(RADIO_UART, PUTS_p)
 #define RADIO_PUTS_P CONCAT(RADIO_UART, PUTS_P)
 #define DEBUG_PUTS   CONCAT(DEBUG_UART, PUTS)
-#define DEBUG_PUTS_p CONCAT(DEBUG_UART, PUTS_p)
 #define DEBUG_PUTS_P CONCAT(DEBUG_UART, PUTS_P)
 
 #define RADIO_GETC   CONCAT(RADIO_UART, GETC)
