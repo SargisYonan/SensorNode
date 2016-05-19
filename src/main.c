@@ -135,7 +135,7 @@ main(void){
             for (int i = 2; i < 6 && sensor_activated[i]; i++) {
                 dht_read_data(&d, &dht_temp, &dht_hum);
                 sprintf(str, "DT%d=%0.2f DH%d=%0.2f ", i - 2, dht_temp, i - 2, dht_hum);
-                strcat(strdht, dtr);
+                strcat(strdht, str);
             }
 #endif // DHT_SENSOR
 #ifdef TEMP_SENSOR

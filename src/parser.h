@@ -28,11 +28,9 @@ struct flags{
     uint8_t measure_dht_temperature:4;
     uint8_t measure_dht_humidity:4;
 #endif /* DHT */
-#ifndef DHT_SENSOR
 #ifdef TEMP_SENSOR
     uint8_t measure_temperature:4;
 #endif /* TEMP */
-#endif /* !DHT */
 #ifdef LIGHT_SENSOR
     uint8_t measure_light:2;
 #endif /* LIGHT */
