@@ -44,9 +44,11 @@ main(void){
     struct dht22 d;
     dht_init(&d);
 #endif // DHT_SENSOR
+#ifndef DHT_SENSOR
 #ifdef TEMP_SENSOR
     float temp;
 #endif // TEMP_SENSOR
+#endif // !DHT_SENSOR
 #ifdef LIGHT_SENSOR
     uint16_t light;
     I2CInit();
@@ -57,112 +59,112 @@ main(void){
     DEBUG_PUTS_P("MAIN: Initialization complete, ready to recieve commands\r\n");
 #endif
     for(;;){
-        process_uart();
-        if( parser_flags.command_recieved ){
-            parser_flags.command_recieved=0;
-            parse_command();
+        process_uart(0);
+        if( parser_flags[0].command_recieved ){
+            parser_flags[0].command_recieved=0;
+            parse_command(0);
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: Command recieved, parsing...\r\n");
 #endif
         }
-        if( parser_flags.command_error ){
+        if( parser_flags[0].command_error ){
             /* send error message */
-            parser_flags.command_error=0;
+            parser_flags[0].command_error=0;
 #ifdef DEBUG
-            DEBUG_PUTS_P("MAIN: parser_flags.command_error=1\r\n");
+            DEBUG_PUTS_P("MAIN: parser_flags[0].command_error=1\r\n");
 #endif
             RADIO_PUTS_P(COMMAND_ERROR);
         }
 #ifdef DHT_SENSOR
-        if( parser_flags.measure_temperature &&
-                parser_flags.measure_humidity ){
+        if( parser_flags[0].measure_temperature &&
+                parser_flags[0].measure_humidity ){
             dht_read_data( &d, &temp, &hum);
             sprintf_P(buf, PSTR("T=%0.2f:H=%0.2f\r\n"), temp, hum);
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: measure_temperature && measure_humidity\r\n");
             DEBUG_PUTS(buf);
 #endif
-            parser_flags.measure_temperature=0;
-            parser_flags.measure_humidity=0;
+            parser_flags[0].measure_temperature=0;
+            parser_flags[0].measure_humidity=0;
         }
 #endif // DHT_SENSOR
 #ifdef TEMP_SENSOR
-    if( parser_flags.measure_temperature){
-        temp = getTemperatureC();
-        sprintf_P(buf, PSTR("T=%0.2f\r\n"), temp);
+        if( parser_flags[0].measure_temperature){
+            temp = getTemperatureC();
+            sprintf_P(buf, PSTR("T=%0.2f\r\n"), temp);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: measure_temperature\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: measure_temperature\r\n");
+            DEBUG_PUTS(buf);
 #endif
-        parser_flags.measure_temperature=0;
-    }
+            parser_flags[0].measure_temperature=0;
+        }
 #endif //TEMP_SENSOR
 #ifdef LIGHT_SENSOR
-    if( parser_flags.measure_light){
-        light = I2CReadValue();
-        sprintf_P(buf, PSTR("L=%d\r\n"), (int) light);
+        if( parser_flags[0].measure_light){
+            light = I2CReadValue();
+            sprintf_P(buf, PSTR("L=%d\r\n"), (int) light);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: measure_light\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: measure_light\r\n");
+            DEBUG_PUTS(buf);
 #endif
-        parser_flags.measure_light=0;
-    }
+            parser_flags[0].measure_light=0;
+        }
 #endif //LIGHT_SENSOR
 #ifdef DHT_SENSOR
-    else if( parser_flags.measure_temperature ){
-        dht_read_data( &d, &temp, &hum);
-        sprintf_P(buf, PSTR("T=%0.2f\r\n"), temp);
+        else if( parser_flags[0].measure_temperature ){
+            dht_read_data( &d, &temp, &hum);
+            sprintf_P(buf, PSTR("T=%0.2f\r\n"), temp);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: measure_temperature\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: measure_temperature\r\n");
+            DEBUG_PUTS(buf);
 #endif
 
-        parser_flags.measure_temperature=0;
-    }
-    else if( parser_flags.measure_humidity ){
-        dht_read_data( &d, &temp, &hum);
-        sprintf_P(buf, PSTR("H=%0.2f\r\n"), hum);
+            parser_flags[0].measure_temperature=0;
+        }
+        else if( parser_flags[0].measure_humidity ){
+            dht_read_data( &d, &temp, &hum);
+            sprintf_P(buf, PSTR("H=%0.2f\r\n"), hum);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: measure_humidity\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: measure_humidity\r\n");
+            DEBUG_PUTS(buf);
 #endif
-        parser_flags.measure_humidity=0;
-    }
+            parser_flags[0].measure_humidity=0;
+        }
 #endif //DHT_SENSOR
-    else if (parser_flags.set_setpoint) {
-        sprintf_P(buf, PSTR("set to: %d\r\n"), (int) parser_flags.var_setpoint);
+        else if (parser_flags[0].set_setpoint) {
+            sprintf_P(buf, PSTR("set to: %d\r\n"), (int) parser_flags[0].var_setpoint);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: set_setpoint\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: set_setpoint\r\n");
+            DEBUG_PUTS(buf);
 #endif
-        parser_flags.set_setpoint = 0;
-    }
-    else if (parser_flags.get_setpoint) {
-        sprintf_P(buf, PSTR("S=%d\r\n"), (int) parser_flags.var_setpoint);
+            parser_flags[0].set_setpoint = 0;
+        }
+        else if (parser_flags[0].get_setpoint) {
+            sprintf_P(buf, PSTR("S=%d\r\n"), (int) parser_flags[0].var_setpoint);
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: get_setpoint\r\n");
-        DEBUG_PUTS(buf);
+            DEBUG_PUTS_P("MAIN: get_setpoint\r\n");
+            DEBUG_PUTS(buf);
 #endif
-        parser_flags.get_setpoint = 0;
-    }
-    else if (parser_flags.command_error_setpoint) {
-        sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
+            parser_flags[0].get_setpoint = 0;
+        }
+        else if (parser_flags[0].command_error_setpoint) {
+            sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
 #ifdef DEBUG
-        DEBUG_PUTS_P("MAIN: parser_flags.command_error_setpoint=1\r\n");
+            DEBUG_PUTS_P("MAIN: parser_flags[0].command_error_setpoint=1\r\n");
 #endif
-        parser_flags.command_error_setpoint = 0;
-    }
-    if(buf[0]){
-        RADIO_PUTS(buf);
-        buf[0]='\0';
-    }
-    if (ledcount-- <= 0) {
-        ledcount = F_CPU / 1e2;
+            parser_flags[0].command_error_setpoint = 0;
+        }
+        if(buf[0]){
+            RADIO_PUTS(buf);
+            buf[0]='\0';
+        }
+        if (ledcount-- <= 0) {
+            ledcount = F_CPU / 1e2;
 #ifdef LIGHT_SENSOR
-        light = I2CReadValue();
-        if (light <= parser_flags.var_setpoint * 0.8) LEDPORT |= _BV(LED);
-        else if (light >= parser_flags.var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
+            light = I2CReadValue();
+            if (light <= parser_flags[0].var_setpoint * 0.8) LEDPORT |= _BV(LED);
+            else if (light >= parser_flags[0].var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
 #endif //LIGHT_SENSOR
+        }
     }
-}
 }
