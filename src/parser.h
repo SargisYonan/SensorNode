@@ -2,6 +2,7 @@
 #define _PARSER_H_
 
 #define MAX_SENSOR_COUNT 10
+#define TOTAL_SENSOR_COUNT LIGHT_SENSOR_COUNT + DHT_SENSOR_COUNT + TEMP_SENSOR_COUNT
 
 /*
  * For both commands you must specify the sensor you are referring to
@@ -21,6 +22,7 @@ struct flags{
     uint8_t set_setpoint:1;
     uint8_t get_setpoint:1;
     uint16_t var_setpoint;
+    uint8_t get_info:1;
     uint8_t measure_all:1;
 #ifdef DHT_SENSOR
     uint8_t measure_dht_temperature:4;
