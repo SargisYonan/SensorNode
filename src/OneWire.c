@@ -75,7 +75,7 @@ uint8_t dallas_command(uint8_t command, uint8_t with_reset);
 DALLAS_TEMPERATURE getDallasTemp(uint8_t msb, uint8_t lsb);
 
 //search bus for slaves
-void search_bus();
+void search_bus(void);
 
 // converts a dallas temperature type to float for the avr
 float DTtof(DALLAS_TEMPERATURE dt);

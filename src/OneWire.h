@@ -38,7 +38,7 @@
 #define DALLAS_PORT 	PORTC
 #define DALLAS_PORT_IN 	PINC
 #define DALLAS_DDR 		DDRC
-#define DALLAS_PIN 		0 			// pin 37 on mega2560
+#define DALLAS_PIN 		PC0 			// pin 37 on mega2560
 
 // The number of devices on the bus.
 #define DALLAS_NUM_DEVICES 1

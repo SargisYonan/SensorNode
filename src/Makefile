@@ -32,11 +32,11 @@ ifneq ($(DHT_SENSOR_COUNT), 0)
 	#CDEFS+=-DDHT_SENSOR
 endif
 ifneq ($(TEMP_SENSOR_COUNT), 0)
-	#CDEFS+=-DTEMP_SENSOR
+	CDEFS+=-DTEMP_SENSOR
 endif
 CDEFS+=-DLIGHT_SENSOR_COUNT=$(LIGHT_SENSOR_COUNT)
 CDEFS+=-DDHT_SENSOR_COUNT=$(DHT_SENSOR_COUNT)
-CDEFS+=-DTEMP_SENSOR_COUNT=$(TEMP_SENSOR_COuNT)
+CDEFS+=-DTEMP_SENSOR_COUNT=$(TEMP_SENSOR_COUNT)
 
 OPT=s
 CSTANDARD=-std=gnu99
@@ -81,8 +81,8 @@ all: $(TARGET).hex
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
 
-$(TARGET).elf: main.o I2C_lib.o twimaster.o uart.o parser.o
-	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o I2C_lib.o twimaster.o uart.o parser.o -o $(TARGET).elf
+$(TARGET).elf: main.o I2C_lib.o twimaster.o uart.o parser.o dht.o OneWire.o
+	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o I2C_lib.o twimaster.o uart.o parser.o dht.o OneWire.o -o $(TARGET).elf
 
 dht.o: dht.c dht.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c dht.c
@@ -101,6 +101,9 @@ twimaster.o: twimaster.c i2cmaster.h
 
 I2C_lib.o: I2C_lib.c I2C_lib.h
 	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c I2C_lib.c
+
+OneWire.o: OneWire.c OneWire.h
+	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c OneWire.c
 
 clean:
 	$(RM) $(TARGET).elf $(TARGET).hex *.o $(TARGET).map *.lst
