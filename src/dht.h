@@ -19,10 +19,10 @@
 /*
  * Sensor's port
  */
-#define DHT_DDR DDRD
-#define DHT_PORT PORTD
-#define DHT_PIN PIND
-#define DHT_BIT PD0
+#define DHT_DDR DDRA
+#define DHT_PORT PORTA
+#define DHT_PIN PINA
+#define DHT_BIT PA0 // pin 22 on arduino
 
 struct dht22 {
     uint8_t data[6];    /* data from sensor store here */
