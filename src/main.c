@@ -6,6 +6,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <avr/interrupt.h>
+#include <string.h>
 #ifdef DHT_SENSOR
 #include "dht.h"
 #endif // DHT_SENSOR
@@ -21,25 +22,26 @@
 
 void S_RADIO_PUTS(char *buf) {
     char temp[strlen(buf + 1)]; // we don't want to modify the original array
-    char temp2[16] = {}; // this is what happens when the compiler doesn't like pointer arithmetic
+    char temp2[11] = {}; // this is what happens when the compiler doesn't like pointer arithmetic
     strncpy(temp, buf, strlen(buf) + 1);
+    //sprintf_P(temp, PSTR("buflen:%d\n"), (int) strlen(temp));
+    //RADIO_PUTS(temp);
     int i;
-    for (i = 0;; i += 15) { // print every 15 characters
-        if (strlen(temp) - i > 15) {
-            char tempc = temp[15 + i];
-            temp[15 + i] = '\0';
+    for (i = 0;; i += 10) { // print every 15 characters
+        if (strlen(temp) - i > 10) {
+            char tempc = temp[10 + i];
+            temp[10 + i] = '\0';
             sprintf_P(temp2, PSTR("%s"), temp + i);
-            //temp2[15] = '\0';
             RADIO_PUTS(temp2);
-            temp[15 + i] = tempc;
+            temp2[0] = '\0';
+            temp[10 + i] = tempc;
         } else {
             break;
         }
     }
     //print the remaining characters
-    //sprintf_P(temp2, PSTR("%s"), temp + i);
-    //temp2[15] = '\0';
-    //RADIO_PUTS(temp2);
+    sprintf_P(temp2, PSTR("%s"), temp + i);
+    RADIO_PUTS(temp2);
 }
 
 
@@ -82,7 +84,6 @@ main(void){
         RADIO_PUTS_P("No sensors installed, operation will now halt\r\n");
         for(;;);
     }
-    //int current_sensor = -1; // keep track of which sensor we are currently handling
     uint8_t sensor_activated[MAX_SENSOR_COUNT] = {}; /*
                                                       * Tells which sensors are installed
                                                       * [1:0]: Light sensors
@@ -113,7 +114,7 @@ main(void){
             RADIO_PUTS_P(COMMAND_ERROR);
         }
         else if (parser_flags.get_info) {
-            sprintf(buf, "LC=%d DC=%d TC=%d\r\n",
+            sprintf(buf, "ND:L=%d D=%d T=%d\r\n",
                     LIGHT_SENSOR_COUNT, DHT_SENSOR_COUNT, TEMP_SENSOR_COUNT);
             S_RADIO_PUTS(buf);
             buf[0] = '\0';
@@ -189,7 +190,7 @@ main(void){
             if (!sensor_activated[sensor + 1]) RADIO_PUTS_P(COMMAND_ERROR); // indexes 2-5
             else {
                 dht_read_data( &d, &dht_temp, &dht_hum);
-                sprintf_P(buf, PSTR("T%d=%0.2f\r\n"), sensor - 1, dht_temp);
+                sprintf_P(buf, PSTR("DT%d=%0.2f\r\n"), sensor - 1, dht_temp);
 #ifdef DEBUG
                 DEBUG_PUTS_P("MAIN: measure_dht_temperature\r\n");
                 DEBUG_PUTS(buf);
@@ -203,7 +204,7 @@ main(void){
             if (!sensor_activated[sensor + 1]) RADIO_PUTS_P(COMMAND_ERROR); // indexes 2-5
             else {
                 dht_read_data( &d, &dht_temp, &dht_hum);
-                sprintf_P(buf, PSTR("H%d=%0.2f\r\n"), sensor - 1, dht_hum);
+                sprintf_P(buf, PSTR("DH%d=%0.2f\r\n"), sensor - 1, dht_hum);
 #ifdef DEBUG
                 DEBUG_PUTS_P("MAIN: measure_dht_humidity\r\n");
                 DEBUG_PUTS(buf);

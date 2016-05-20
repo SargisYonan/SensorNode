@@ -160,7 +160,7 @@ void parse_command() {
         parser_flags.get_setpoint=1;
         parsed = 1;
     }
-    else {
+    if (!parsed) {
         parser_flags.command_error=1;
         parsed = 1;
     }
