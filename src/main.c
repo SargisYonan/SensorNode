@@ -213,28 +213,30 @@ main(void){
             parser_flags.measure_dht_humidity=0;
         }
 #endif //DHT_SENSOR
-        else if (parser_flags.set_setpoint) {
-            sprintf_P(buf, PSTR("set to: %d\r\n"), (int) parser_flags.var_setpoint);
+        else if (parser_flags.set_actuator_setpoint) {
+            // TODO
+            sprintf_P(buf, PSTR("set to: %d\r\n"), (int) 0);
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: set_setpoint\r\n");
             DEBUG_PUTS(buf);
 #endif
-            parser_flags.set_setpoint = 0;
+            parser_flags.set_actuator_setpoint = 0;
         }
-        else if (parser_flags.get_setpoint) {
-            sprintf_P(buf, PSTR("S=%d\r\n"), (int) parser_flags.var_setpoint);
+        else if (parser_flags.get_actuator_setpoint) {
+            // TODO
+            sprintf_P(buf, PSTR("S=%d\r\n"), (int) 0);
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: get_setpoint\r\n");
             DEBUG_PUTS(buf);
 #endif
-            parser_flags.get_setpoint = 0;
+            parser_flags.get_actuator_setpoint = 0;
         }
-        else if (parser_flags.command_error_setpoint) {
+        else if (parser_flags.command_error_syntax) {
             sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
 #ifdef DEBUG
-            DEBUG_PUTS_P("MAIN: parser_flags.command_error_setpoint=1\r\n");
+            DEBUG_PUTS_P("MAIN: parser_flags.command_error_syntax=1\r\n");
 #endif
-            parser_flags.command_error_setpoint = 0;
+            parser_flags.command_error_syntax = 0;
         }
         if(buf[0]){
             RADIO_PUTS(buf);
@@ -244,8 +246,8 @@ main(void){
             ledcount = F_CPU / 1e2;
 #ifdef LIGHT_SENSOR
             light = I2CReadValue();
-            if (light <= parser_flags.var_setpoint * 0.8) LEDPORT |= _BV(LED);
-            else if (light >= parser_flags.var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
+            //if (light <= parser_flags.var_setpoint * 0.8) LEDPORT |= _BV(LED);
+            //else if (light >= parser_flags.var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
 #endif //LIGHT_SENSOR
         }
     }

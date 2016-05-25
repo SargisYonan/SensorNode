@@ -4,6 +4,8 @@
 #define MAX_SENSOR_COUNT 10
 #define TOTAL_SENSOR_COUNT LIGHT_SENSOR_COUNT + DHT_SENSOR_COUNT + TEMP_SENSOR_COUNT
 
+#define MAX_ACTUATOR_COUNT 8
+
 /*
  * For both commands you must specify the sensor you are referring to
  */
@@ -13,15 +15,20 @@ void parse_command(void);
 /* measure_light[1:0] = Light sensors (Max 2 on one board)
  * measure_dht_*[3:0] = Humidity Sensors
  * measure_temperature[3:0] = Temperature Sensors
+ * actuator_*[7:0] =  Actuators
  */
 struct flags{
     uint8_t uart_error:1;
     uint8_t command_error:1;
     uint8_t command_recieved:1;
-    uint8_t command_error_setpoint:1;
-    uint8_t set_setpoint:1;
-    uint8_t get_setpoint:1;
-    uint16_t var_setpoint;
+    uint8_t command_error_syntax:1;
+    uint16_t value_buffer; // contains a number that was read while parsing the current command
+    uint8_t set_actuator_setpoint; // 8 bits for 8 actuators
+    uint8_t get_actuator_setpoint; // 8 bits for 8 actuators
+    uint8_t set_actuator_onoff; // 8 bits for 8 actuators
+    uint8_t get_actuator_onoff; // 8 bits for 8 actuators
+    uint8_t set_actuator_armdisarm; // 8 bits for 8 actuators
+    uint8_t get_actuator_armdisarm; // 8 bits for 8 actuators
     uint8_t get_info:1;
     uint8_t measure_all:1;
 #ifdef DHT_SENSOR

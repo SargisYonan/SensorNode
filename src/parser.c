@@ -12,6 +12,19 @@ char uart_buffer[UART_RX_BUFFER_SIZE];
 char parser_buffer[UART_RX_BUFFER_SIZE];
 uint8_t pb_index = 0;
 
+int subindex(char *str, char *sub) { // returns the index of the end of the first occurence of sub in str or -1
+    for (int i = 0; i < (int) strlen(str); i++) {
+        int temp = i;
+        for (int j = 0; j < (int) strlen(sub); j++) {
+            if (j == (int) strlen(sub) - 1 && str[i] == sub[j]) return i; // if the last character is the same, then you found it
+            if (str[i] == sub[j]) i++;
+            else break;
+        }
+        i = temp;
+    }
+    return -1;
+}
+
 void process_uart(){
     uint16_t c;
     c = RADIO_GETC();
@@ -59,16 +72,23 @@ void parse_command() {
     /* look at queries */
 
     uint8_t parsed = 0; /*
-                           * a boolean flag for tracking whether we already recieved a command
-                           * Note: it is important to consider the possibility
-                           * of having a fragment of a command but not finding
-                           * out that it isn't a command until we commit
-                           * ourselves to the process of setting command flags
-                           * appropriately.
-                           * IE: if we got "dfsnDTT1?", observe that without
-                           * this flag, we would have ended up having no command
-                           * or worse, calling this a "BAD COMMAND"
-                           */
+                         * a boolean flag for tracking whether we already recieved a command
+                         * Note: it is important to consider the possibility
+                         * of having a fragment of a command but not finding
+                         * out that it isn't a command until we commit
+                         * ourselves to the process of setting command flags
+                         * appropriately.
+                         * IE: if we got "dfsnDTT1?", observe that without
+                         * this flag, we would have ended up having no command
+                         * or worse, calling this a "BAD COMMAND"
+                         */
+
+    uint8_t getVal = 0; /*
+                         * a flag used to determine whether we should save a
+                         * number in the flags buffer.
+                         * Will be zero if unnecessary or contain the first
+                         * index to read the number from
+                         */
 
     if(!parsed && strcasestr(parser_buffer, "I?")){
         parser_flags.get_info = 1;
@@ -136,34 +156,273 @@ void parse_command() {
         parser_flags.measure_all = 1;
         parsed = 1;
     }
-    if (!parsed && strcasestr(parser_buffer, "S=")) {
-        int i = 0;
-        while (parser_buffer[i] != 'S' || parser_buffer[i + 1] != '=') {
-            i++;
-        }
-        uint16_t tval = 0; //temporarily used for calculating given number
-        int start = (i += 2); // move to index where number should start
-        while(isdigit(parser_buffer[i])) {
-            i++;
-        }
-        int stop = i - 1;
-        if (stop < start) parser_flags.command_error_setpoint = 1; // if stop is less than start, no number was entered
-        if (!parser_flags.command_error_setpoint) {
-            parser_flags.set_setpoint = 1;
-            parser_buffer[stop + 1] = '\0';
-            tval = (uint16_t) atoi(start + parser_buffer); // convert only the number part of the string
-            parser_flags.var_setpoint = tval;
-        }
+    if (!parsed && strcasestr(parser_buffer, "AO")) {
         parsed = 1;
+        if (strcasestr(parser_buffer, "AO0")) {
+            if (strcasestr(parser_buffer, "AO0?")) parser_flags.get_actuator_onoff = _BV(0);
+            else if(strcasestr(parser_buffer, "AO0=")) {
+                parser_flags.set_actuator_onoff = _BV(0);
+                getVal = subindex(parser_buffer, "AO0=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO1")) {
+            if (strcasestr(parser_buffer, "AO1?")) parser_flags.get_actuator_onoff = _BV(1);
+            else if(strcasestr(parser_buffer, "AO1=")) {
+                parser_flags.set_actuator_onoff = _BV(1);
+                getVal = subindex(parser_buffer, "AO1=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO2")) {
+            if (strcasestr(parser_buffer, "AO2?")) parser_flags.get_actuator_onoff = _BV(2);
+            else if(strcasestr(parser_buffer, "AO2=")) {
+                parser_flags.set_actuator_onoff = _BV(2);
+                getVal = subindex(parser_buffer, "AO2=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO3")) {
+            if (strcasestr(parser_buffer, "AO3?")) parser_flags.get_actuator_onoff = _BV(3);
+            else if(strcasestr(parser_buffer, "AO3=")) {
+                parser_flags.set_actuator_onoff = _BV(3);
+                getVal = subindex(parser_buffer, "A03=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO4")) {
+            if (strcasestr(parser_buffer, "AO4?")) parser_flags.get_actuator_onoff = _BV(4);
+            else if(strcasestr(parser_buffer, "AO4=")) {
+                parser_flags.set_actuator_onoff = _BV(4);
+                getVal = subindex(parser_buffer, "AO4=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO5")) {
+            if (strcasestr(parser_buffer, "AO5?")) parser_flags.get_actuator_onoff = _BV(5);
+            else if(strcasestr(parser_buffer, "AO5=")) {
+                parser_flags.set_actuator_onoff = _BV(5);
+                getVal = subindex(parser_buffer, "AO5=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO6")) {
+            if (strcasestr(parser_buffer, "AO6?")) parser_flags.get_actuator_onoff = _BV(6);
+            else if(strcasestr(parser_buffer, "AO6=")) {
+                parser_flags.set_actuator_onoff = _BV(6);
+                getVal = subindex(parser_buffer, "AO6=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AO7")) {
+            if (strcasestr(parser_buffer, "AO7?")) parser_flags.get_actuator_onoff = _BV(7);
+            else if(strcasestr(parser_buffer, "AO7=")) {
+                parser_flags.set_actuator_onoff = _BV(7);
+                getVal = subindex(parser_buffer, "AO7=") + 1;
+            }
+        }
+        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
     }
-    if (!parsed && strcasestr(parser_buffer, "S?")) {
-        parser_flags.get_setpoint=1;
+    if (!parsed && strcasestr(parser_buffer, "AA")) {
         parsed = 1;
+        if (strcasestr(parser_buffer, "AA0")) {
+            if (strcasestr(parser_buffer, "AA0?")) parser_flags.get_actuator_onoff = _BV(0);
+            else if(strcasestr(parser_buffer, "AA0=")) {
+                parser_flags.set_actuator_onoff = _BV(0);
+                getVal = subindex(parser_buffer, "AA0=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA1")) {
+            if (strcasestr(parser_buffer, "AA1?")) parser_flags.get_actuator_onoff = _BV(1);
+            else if(strcasestr(parser_buffer, "AA1=")) {
+                parser_flags.set_actuator_onoff = _BV(1);
+                getVal = subindex(parser_buffer, "AA1=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA2")) {
+            if (strcasestr(parser_buffer, "AA2?")) parser_flags.get_actuator_onoff = _BV(2);
+            else if(strcasestr(parser_buffer, "AA2=")) {
+                parser_flags.set_actuator_onoff = _BV(2);
+                getVal = subindex(parser_buffer, "AA2=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA3")) {
+            if (strcasestr(parser_buffer, "AA3?")) parser_flags.get_actuator_onoff = _BV(3);
+            else if(strcasestr(parser_buffer, "AA3=")) {
+                parser_flags.set_actuator_onoff = _BV(3);
+                getVal = subindex(parser_buffer, "A03=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA4")) {
+            if (strcasestr(parser_buffer, "AA4?")) parser_flags.get_actuator_onoff = _BV(4);
+            else if(strcasestr(parser_buffer, "AA4=")) {
+                parser_flags.set_actuator_onoff = _BV(4);
+                getVal = subindex(parser_buffer, "AA4=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA5")) {
+            if (strcasestr(parser_buffer, "AA5?")) parser_flags.get_actuator_onoff = _BV(5);
+            else if(strcasestr(parser_buffer, "AA5=")) {
+                parser_flags.set_actuator_onoff = _BV(5);
+                getVal = subindex(parser_buffer, "AA5=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA6")) {
+            if (strcasestr(parser_buffer, "AA6?")) parser_flags.get_actuator_onoff = _BV(6);
+            else if(strcasestr(parser_buffer, "AA6=")) {
+                parser_flags.set_actuator_onoff = _BV(6);
+                getVal = subindex(parser_buffer, "AA6=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AA7")) {
+            if (strcasestr(parser_buffer, "AA7?")) parser_flags.get_actuator_onoff = _BV(7);
+            else if(strcasestr(parser_buffer, "AA7=")) {
+                parser_flags.set_actuator_onoff = _BV(7);
+                getVal = subindex(parser_buffer, "AA7=") + 1;
+            }
+        }
+        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+
+    }
+    if (!parsed && strcasestr(parser_buffer, "AP")) {
+        parsed = 1;
+        if (strcasestr(parser_buffer, "AP0")) {
+            if (strcasestr(parser_buffer, "AP0?")) parser_flags.get_actuator_onoff = _BV(0);
+            else if(strcasestr(parser_buffer, "AP0=")) {
+                parser_flags.set_actuator_onoff = _BV(0);
+                getVal = subindex(parser_buffer, "AP0=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP1")) {
+            if (strcasestr(parser_buffer, "AP1?")) parser_flags.get_actuator_onoff = _BV(1);
+            else if(strcasestr(parser_buffer, "AP1=")) {
+                parser_flags.set_actuator_onoff = _BV(1);
+                getVal = subindex(parser_buffer, "AP1=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP2")) {
+            if (strcasestr(parser_buffer, "AP2?")) parser_flags.get_actuator_onoff = _BV(2);
+            else if(strcasestr(parser_buffer, "AP2=")) {
+                parser_flags.set_actuator_onoff = _BV(2);
+                getVal = subindex(parser_buffer, "AP2=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP3")) {
+            if (strcasestr(parser_buffer, "AP3?")) parser_flags.get_actuator_onoff = _BV(3);
+            else if(strcasestr(parser_buffer, "AP3=")) {
+                parser_flags.set_actuator_onoff = _BV(3);
+                getVal = subindex(parser_buffer, "A03=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP4")) {
+            if (strcasestr(parser_buffer, "AP4?")) parser_flags.get_actuator_onoff = _BV(4);
+            else if(strcasestr(parser_buffer, "AP4=")) {
+                parser_flags.set_actuator_onoff = _BV(4);
+                getVal = subindex(parser_buffer, "AP4=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP5")) {
+            if (strcasestr(parser_buffer, "AP5?")) parser_flags.get_actuator_onoff = _BV(5);
+            else if(strcasestr(parser_buffer, "AP5=")) {
+                parser_flags.set_actuator_onoff = _BV(5);
+                getVal = subindex(parser_buffer, "A5=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AP6")) {
+            if (strcasestr(parser_buffer, "AP6?")) parser_flags.get_actuator_onoff = _BV(6);
+            else if(strcasestr(parser_buffer, "AP6=")) {
+                parser_flags.set_actuator_onoff = _BV(6);
+                getVal = subindex(parser_buffer, "AP6=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "PO7")) {
+            if (strcasestr(parser_buffer, "PO7?")) parser_flags.get_actuator_onoff = _BV(7);
+            else if(strcasestr(parser_buffer, "AP7=")) {
+                parser_flags.set_actuator_onoff = _BV(7);
+                getVal = subindex(parser_buffer, "A7=") + 1;
+            }
+        }
+        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+
+    }
+    if (!parsed && strcasestr(parser_buffer, "AS")) { // needs to expand, too tired to know why
+        parsed = 1;
+        if (strcasestr(parser_buffer, "AS0")) {
+            if (strcasestr(parser_buffer, "AS0?")) parser_flags.get_actuator_onoff = _BV(0);
+            else if(strcasestr(parser_buffer, "AS0=")) {
+                parser_flags.set_actuator_onoff = _BV(0);
+                getVal = subindex(parser_buffer, "AS0=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS1")) {
+            if (strcasestr(parser_buffer, "AS1?")) parser_flags.get_actuator_onoff = _BV(1);
+            else if(strcasestr(parser_buffer, "AS1=")) {
+                parser_flags.set_actuator_onoff = _BV(1);
+                getVal = subindex(parser_buffer, "AS1=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS2")) {
+            if (strcasestr(parser_buffer, "AS2?")) parser_flags.get_actuator_onoff = _BV(2);
+            else if(strcasestr(parser_buffer, "AS2=")) {
+                parser_flags.set_actuator_onoff = _BV(2);
+                getVal = subindex(parser_buffer, "AS2=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS3")) {
+            if (strcasestr(parser_buffer, "AS3?")) parser_flags.get_actuator_onoff = _BV(3);
+            else if(strcasestr(parser_buffer, "AS3=")) {
+                parser_flags.set_actuator_onoff = _BV(3);
+                getVal = subindex(parser_buffer, "A03=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS4")) {
+            if (strcasestr(parser_buffer, "AS4?")) parser_flags.get_actuator_onoff = _BV(4);
+            else if(strcasestr(parser_buffer, "AS4=")) {
+                parser_flags.set_actuator_onoff = _BV(4);
+                getVal = subindex(parser_buffer, "AS4=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS5")) {
+            if (strcasestr(parser_buffer, "AS5?")) parser_flags.get_actuator_onoff = _BV(5);
+            else if(strcasestr(parser_buffer, "AS5=")) {
+                parser_flags.set_actuator_onoff = _BV(5);
+                getVal = subindex(parser_buffer, "AS5=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS6")) {
+            if (strcasestr(parser_buffer, "AS6?")) parser_flags.get_actuator_onoff = _BV(6);
+            else if(strcasestr(parser_buffer, "AS6=")) {
+                parser_flags.set_actuator_onoff = _BV(6);
+                getVal = subindex(parser_buffer, "AS6=") + 1;
+            }
+        }
+        else if (strcasestr(parser_buffer, "AS7")) {
+            if (strcasestr(parser_buffer, "AS7?")) parser_flags.get_actuator_onoff = _BV(7);
+            else if(strcasestr(parser_buffer, "AS7=")) {
+                parser_flags.set_actuator_onoff = _BV(7);
+                getVal = subindex(parser_buffer, "AS7=") + 1;
+            }
+        }
+        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+
     }
     if (!parsed) {
         parser_flags.command_error=1;
         parsed = 1;
     }
+    if (getVal) {
+        //int i = 0;
+        //while (parser_buffer[i] != 'S' || parser_buffer[i + 1] != '=') {
+        //    i++;
+        //}
+        uint16_t tval = 0; //temporarily used for calculating given number
+        //int start = (i += 2); // move to index where number should start
+        int i = getVal;
+        while(isdigit(parser_buffer[i])) {
+            i++;
+        }
+        int stop = i - 1;
+        if (stop < getVal) parser_flags.command_error_syntax = 1; // if stop is less than start, no number was entered
+        if (!parser_flags.command_error_syntax) {
+            parser_buffer[stop + 1] = '\0';
+            tval = (uint16_t) atoi(getVal + parser_buffer); // convert only the number part of the string
+            parser_flags.value_buffer = tval;
+        }
+    }
+    getVal = 0;
     parser_buffer[0]='\0'; /*
                             * make parser empty string after using it
                             * to prevent reparsing same command
