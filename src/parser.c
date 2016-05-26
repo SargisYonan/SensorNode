@@ -156,7 +156,7 @@ void parse_command() {
         parser_flags.measure_all = 1;
         parsed = 1;
     }
-    if (!parsed && strcasestr(parser_buffer, "AO")) {
+    if (!parsed && strcasestr(parser_buffer, "AO")) { // choosing whether or not the actuator is off
         parsed = 1;
         if (strcasestr(parser_buffer, "AO0")) {
             if (strcasestr(parser_buffer, "AO0?")) parser_flags.get_actuator_onoff = _BV(0);
@@ -216,187 +216,339 @@ void parse_command() {
         }
         if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
     }
-    if (!parsed && strcasestr(parser_buffer, "AA")) {
+    if (!parsed && strcasestr(parser_buffer, "AA")) { // choosing whether actuator is forced on
         parsed = 1;
         if (strcasestr(parser_buffer, "AA0")) {
-            if (strcasestr(parser_buffer, "AA0?")) parser_flags.get_actuator_onoff = _BV(0);
+            if (strcasestr(parser_buffer, "AA0?")) parser_flags.get_actuator_armdisarm = _BV(0);
             else if(strcasestr(parser_buffer, "AA0=")) {
-                parser_flags.set_actuator_onoff = _BV(0);
+                parser_flags.set_actuator_armdisarm = _BV(0);
                 getVal = subindex(parser_buffer, "AA0=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA1")) {
-            if (strcasestr(parser_buffer, "AA1?")) parser_flags.get_actuator_onoff = _BV(1);
+            if (strcasestr(parser_buffer, "AA1?")) parser_flags.get_actuator_armdisarm = _BV(1);
             else if(strcasestr(parser_buffer, "AA1=")) {
-                parser_flags.set_actuator_onoff = _BV(1);
+                parser_flags.set_actuator_armdisarm = _BV(1);
                 getVal = subindex(parser_buffer, "AA1=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA2")) {
-            if (strcasestr(parser_buffer, "AA2?")) parser_flags.get_actuator_onoff = _BV(2);
+            if (strcasestr(parser_buffer, "AA2?")) parser_flags.get_actuator_armdisarm = _BV(2);
             else if(strcasestr(parser_buffer, "AA2=")) {
-                parser_flags.set_actuator_onoff = _BV(2);
+                parser_flags.set_actuator_armdisarm = _BV(2);
                 getVal = subindex(parser_buffer, "AA2=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA3")) {
-            if (strcasestr(parser_buffer, "AA3?")) parser_flags.get_actuator_onoff = _BV(3);
+            if (strcasestr(parser_buffer, "AA3?")) parser_flags.get_actuator_armdisarm = _BV(3);
             else if(strcasestr(parser_buffer, "AA3=")) {
-                parser_flags.set_actuator_onoff = _BV(3);
-                getVal = subindex(parser_buffer, "A03=") + 1;
+                parser_flags.set_actuator_armdisarm = _BV(3);
+                getVal = subindex(parser_buffer, "AA3=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA4")) {
-            if (strcasestr(parser_buffer, "AA4?")) parser_flags.get_actuator_onoff = _BV(4);
+            if (strcasestr(parser_buffer, "AA4?")) parser_flags.get_actuator_armdisarm = _BV(4);
             else if(strcasestr(parser_buffer, "AA4=")) {
-                parser_flags.set_actuator_onoff = _BV(4);
+                parser_flags.set_actuator_armdisarm = _BV(4);
                 getVal = subindex(parser_buffer, "AA4=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA5")) {
-            if (strcasestr(parser_buffer, "AA5?")) parser_flags.get_actuator_onoff = _BV(5);
+            if (strcasestr(parser_buffer, "AA5?")) parser_flags.get_actuator_armdisarm = _BV(5);
             else if(strcasestr(parser_buffer, "AA5=")) {
-                parser_flags.set_actuator_onoff = _BV(5);
+                parser_flags.set_actuator_armdisarm = _BV(5);
                 getVal = subindex(parser_buffer, "AA5=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA6")) {
-            if (strcasestr(parser_buffer, "AA6?")) parser_flags.get_actuator_onoff = _BV(6);
+            if (strcasestr(parser_buffer, "AA6?")) parser_flags.get_actuator_armdisarm = _BV(6);
             else if(strcasestr(parser_buffer, "AA6=")) {
-                parser_flags.set_actuator_onoff = _BV(6);
+                parser_flags.set_actuator_armdisarm = _BV(6);
                 getVal = subindex(parser_buffer, "AA6=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AA7")) {
-            if (strcasestr(parser_buffer, "AA7?")) parser_flags.get_actuator_onoff = _BV(7);
+            if (strcasestr(parser_buffer, "AA7?")) parser_flags.get_actuator_armdisarm = _BV(7);
             else if(strcasestr(parser_buffer, "AA7=")) {
-                parser_flags.set_actuator_onoff = _BV(7);
+                parser_flags.set_actuator_armdisarm = _BV(7);
                 getVal = subindex(parser_buffer, "AA7=") + 1;
             }
         }
-        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+        if (!parser_flags.set_actuator_armdisarm && !parser_flags.get_actuator_armdisarm) parsed = 0;
 
     }
-    if (!parsed && strcasestr(parser_buffer, "AP")) {
+    if (!parsed && strcasestr(parser_buffer, "AP")) { // choosing setpoint for actuator
         parsed = 1;
         if (strcasestr(parser_buffer, "AP0")) {
-            if (strcasestr(parser_buffer, "AP0?")) parser_flags.get_actuator_onoff = _BV(0);
+            if (strcasestr(parser_buffer, "AP0?")) parser_flags.get_actuator_setpoint = _BV(0);
             else if(strcasestr(parser_buffer, "AP0=")) {
-                parser_flags.set_actuator_onoff = _BV(0);
+                parser_flags.set_actuator_setpoint = _BV(0);
                 getVal = subindex(parser_buffer, "AP0=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP1")) {
-            if (strcasestr(parser_buffer, "AP1?")) parser_flags.get_actuator_onoff = _BV(1);
+            if (strcasestr(parser_buffer, "AP1?")) parser_flags.get_actuator_setpoint = _BV(1);
             else if(strcasestr(parser_buffer, "AP1=")) {
-                parser_flags.set_actuator_onoff = _BV(1);
+                parser_flags.set_actuator_setpoint = _BV(1);
                 getVal = subindex(parser_buffer, "AP1=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP2")) {
-            if (strcasestr(parser_buffer, "AP2?")) parser_flags.get_actuator_onoff = _BV(2);
+            if (strcasestr(parser_buffer, "AP2?")) parser_flags.get_actuator_setpoint = _BV(2);
             else if(strcasestr(parser_buffer, "AP2=")) {
-                parser_flags.set_actuator_onoff = _BV(2);
+                parser_flags.set_actuator_setpoint = _BV(2);
                 getVal = subindex(parser_buffer, "AP2=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP3")) {
-            if (strcasestr(parser_buffer, "AP3?")) parser_flags.get_actuator_onoff = _BV(3);
+            if (strcasestr(parser_buffer, "AP3?")) parser_flags.get_actuator_setpoint = _BV(3);
             else if(strcasestr(parser_buffer, "AP3=")) {
-                parser_flags.set_actuator_onoff = _BV(3);
-                getVal = subindex(parser_buffer, "A03=") + 1;
+                parser_flags.set_actuator_setpoint = _BV(3);
+                getVal = subindex(parser_buffer, "AP3=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP4")) {
-            if (strcasestr(parser_buffer, "AP4?")) parser_flags.get_actuator_onoff = _BV(4);
+            if (strcasestr(parser_buffer, "AP4?")) parser_flags.get_actuator_setpoint = _BV(4);
             else if(strcasestr(parser_buffer, "AP4=")) {
-                parser_flags.set_actuator_onoff = _BV(4);
+                parser_flags.set_actuator_setpoint = _BV(4);
                 getVal = subindex(parser_buffer, "AP4=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP5")) {
-            if (strcasestr(parser_buffer, "AP5?")) parser_flags.get_actuator_onoff = _BV(5);
+            if (strcasestr(parser_buffer, "AP5?")) parser_flags.get_actuator_setpoint = _BV(5);
             else if(strcasestr(parser_buffer, "AP5=")) {
-                parser_flags.set_actuator_onoff = _BV(5);
-                getVal = subindex(parser_buffer, "A5=") + 1;
+                parser_flags.set_actuator_setpoint = _BV(5);
+                getVal = subindex(parser_buffer, "AP5=") + 1;
             }
         }
         else if (strcasestr(parser_buffer, "AP6")) {
-            if (strcasestr(parser_buffer, "AP6?")) parser_flags.get_actuator_onoff = _BV(6);
+            if (strcasestr(parser_buffer, "AP6?")) parser_flags.get_actuator_setpoint = _BV(6);
             else if(strcasestr(parser_buffer, "AP6=")) {
-                parser_flags.set_actuator_onoff = _BV(6);
+                parser_flags.set_actuator_setpoint = _BV(6);
                 getVal = subindex(parser_buffer, "AP6=") + 1;
             }
         }
-        else if (strcasestr(parser_buffer, "PO7")) {
-            if (strcasestr(parser_buffer, "PO7?")) parser_flags.get_actuator_onoff = _BV(7);
+        else if (strcasestr(parser_buffer, "AP7")) {
+            if (strcasestr(parser_buffer, "AP7?")) parser_flags.get_actuator_setpoint = _BV(7);
             else if(strcasestr(parser_buffer, "AP7=")) {
-                parser_flags.set_actuator_onoff = _BV(7);
-                getVal = subindex(parser_buffer, "A7=") + 1;
+                parser_flags.set_actuator_setpoint = _BV(7);
+                getVal = subindex(parser_buffer, "AP7=") + 1;
             }
         }
-        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+        if (!parser_flags.set_actuator_setpoint && !parser_flags.get_actuator_setpoint) parsed = 0;
 
     }
-    if (!parsed && strcasestr(parser_buffer, "AS")) { // needs to expand, too tired to know why
+    if (!parsed && strcasestr(parser_buffer, "AS")) { // choosing sensor for actuator
         parsed = 1;
         if (strcasestr(parser_buffer, "AS0")) {
-            if (strcasestr(parser_buffer, "AS0?")) parser_flags.get_actuator_onoff = _BV(0);
+            if (strcasestr(parser_buffer, "AS0?")) parser_flags.get_actuator_choosesensor = _BV(0);
             else if(strcasestr(parser_buffer, "AS0=")) {
-                parser_flags.set_actuator_onoff = _BV(0);
-                getVal = subindex(parser_buffer, "AS0=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(0);
+                getVal = subindex(parser_buffer, "AS0="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS1")) {
-            if (strcasestr(parser_buffer, "AS1?")) parser_flags.get_actuator_onoff = _BV(1);
+            if (strcasestr(parser_buffer, "AS1?")) parser_flags.get_actuator_choosesensor = _BV(1);
             else if(strcasestr(parser_buffer, "AS1=")) {
-                parser_flags.set_actuator_onoff = _BV(1);
-                getVal = subindex(parser_buffer, "AS1=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(1);
+                getVal = subindex(parser_buffer, "AS1="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS2")) {
-            if (strcasestr(parser_buffer, "AS2?")) parser_flags.get_actuator_onoff = _BV(2);
+            if (strcasestr(parser_buffer, "AS2?")) parser_flags.get_actuator_choosesensor = _BV(2);
             else if(strcasestr(parser_buffer, "AS2=")) {
-                parser_flags.set_actuator_onoff = _BV(2);
-                getVal = subindex(parser_buffer, "AS2=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(2);
+                getVal = subindex(parser_buffer, "AS2="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS3")) {
-            if (strcasestr(parser_buffer, "AS3?")) parser_flags.get_actuator_onoff = _BV(3);
+            if (strcasestr(parser_buffer, "AS3?")) parser_flags.get_actuator_choosesensor = _BV(3);
             else if(strcasestr(parser_buffer, "AS3=")) {
-                parser_flags.set_actuator_onoff = _BV(3);
-                getVal = subindex(parser_buffer, "A03=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(3);
+                getVal = subindex(parser_buffer, "AS3="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS4")) {
-            if (strcasestr(parser_buffer, "AS4?")) parser_flags.get_actuator_onoff = _BV(4);
+            if (strcasestr(parser_buffer, "AS4?")) parser_flags.get_actuator_choosesensor = _BV(4);
             else if(strcasestr(parser_buffer, "AS4=")) {
-                parser_flags.set_actuator_onoff = _BV(4);
-                getVal = subindex(parser_buffer, "AS4=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(4);
+                getVal = subindex(parser_buffer, "AS4="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS5")) {
-            if (strcasestr(parser_buffer, "AS5?")) parser_flags.get_actuator_onoff = _BV(5);
+            if (strcasestr(parser_buffer, "AS5?")) parser_flags.get_actuator_choosesensor = _BV(5);
             else if(strcasestr(parser_buffer, "AS5=")) {
-                parser_flags.set_actuator_onoff = _BV(5);
-                getVal = subindex(parser_buffer, "AS5=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(5);
+                getVal = subindex(parser_buffer, "AS5="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS6")) {
-            if (strcasestr(parser_buffer, "AS6?")) parser_flags.get_actuator_onoff = _BV(6);
+            if (strcasestr(parser_buffer, "AS6?")) parser_flags.get_actuator_choosesensor = _BV(6);
             else if(strcasestr(parser_buffer, "AS6=")) {
-                parser_flags.set_actuator_onoff = _BV(6);
-                getVal = subindex(parser_buffer, "AS6=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(6);
+                getVal = subindex(parser_buffer, "AS6="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
         else if (strcasestr(parser_buffer, "AS7")) {
-            if (strcasestr(parser_buffer, "AS7?")) parser_flags.get_actuator_onoff = _BV(7);
+            if (strcasestr(parser_buffer, "AS7?")) parser_flags.get_actuator_choosesensor = _BV(7);
             else if(strcasestr(parser_buffer, "AS7=")) {
-                parser_flags.set_actuator_onoff = _BV(7);
-                getVal = subindex(parser_buffer, "AS7=") + 1;
+                parser_flags.set_actuator_choosesensor = _BV(7);
+                getVal = subindex(parser_buffer, "AS7="); // this will cause it
+                // to have a syntax error
+                // because the start
+                // index will point to
+                // a non-integer (if
+                // getVal isn't set
+                // back to 0)
+                if (isupper(parser_buffer[getVal + 1]) && isdigit(parser_buffer[getVal + 2]) &&
+                        !isdigit(parser_buffer[getVal + 3])) {
+                    char tempc = parser_buffer[getVal + 1];
+                    int tempi = (int) parser_buffer[getVal + 2] - 48;
+                    // 2 light sensors, 4 dht sensors, 4 temp sensors at max
+                    if ((tempc == 'L' && tempi < 2) || (tempc == 'D' && tempi < 4) || (tempc == 'T' && tempi < 4)) {
+                        parser_flags.value_buffer = (tempc == 'L' ? 0 : (tempc == 'D' ? 2 : 6)) + tempi;
+                    } else {
+                        parser_flags.set_actuator_choosesensor = 0; // this command is no longer valid
+                        parser_flags.command_error_syntax = 1; // give it a syntax error
+                    }
+                    getVal = 0;
+                }
             }
         }
-        if (!parser_flags.set_actuator_onoff && !parser_flags.get_actuator_onoff) parsed = 0;
+        if (!parser_flags.set_actuator_choosesensor && !parser_flags.get_actuator_choosesensor) parsed = 0;
 
     }
     if (!parsed) {

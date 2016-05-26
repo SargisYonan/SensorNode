@@ -20,7 +20,8 @@
 #include "uart_macros.h"
 #include "parser.h"
 
-void S_RADIO_PUTS(char *buf) {
+// device: 0: primary, 1: debug
+void S_PUTS(char *buf, int device) {
     char temp[strlen(buf + 1)]; // we don't want to modify the original array
     char temp2[11] = {}; // this is what happens when the compiler doesn't like pointer arithmetic
     strncpy(temp, buf, strlen(buf) + 1);
@@ -32,7 +33,8 @@ void S_RADIO_PUTS(char *buf) {
             char tempc = temp[10 + i];
             temp[10 + i] = '\0';
             sprintf_P(temp2, PSTR("%s"), temp + i);
-            RADIO_PUTS(temp2);
+            if (device == 0) RADIO_PUTS(temp2);
+            else if (device == 1) DEBUG_PUTS(temp2);
             temp2[0] = '\0';
             temp[10 + i] = tempc;
         } else {
@@ -41,7 +43,8 @@ void S_RADIO_PUTS(char *buf) {
     }
     //print the remaining characters
     sprintf_P(temp2, PSTR("%s"), temp + i);
-    RADIO_PUTS(temp2);
+    if (device == 0) RADIO_PUTS(temp2);
+    else if (device == 1) DEBUG_PUTS(temp2);
 }
 
 
@@ -81,9 +84,20 @@ main(void){
     serial_init();
     sei();
     if (LIGHT_SENSOR_COUNT <= 0 && DHT_SENSOR_COUNT <= 0 && TEMP_SENSOR_COUNT <= 0) {
-        RADIO_PUTS_P("No sensors installed, operation will now halt\r\n");
+        sprintf(buf, "No sensors installed, operation will now halt\r\n");
+        S_PUTS(buf, 0);
         for(;;);
     }
+    if (LIGHT_SENSOR_COUNT > 1 || DHT_SENSOR_COUNT > 1 || TEMP_SENSOR_COUNT > 1) {
+        sprintf(buf, "Cannot support more than one of a single type of sensor yet\r\n");
+        S_PUTS(buf, 0);
+        for(;;);
+    }
+    // the following 4 are for storing settings for the sensors
+    uint8_t actuator_onoff = 0; //bitmask it
+    uint8_t actuator_armdisarm = 0; //bitmask it
+    uint16_t actuator_setpoint[MAX_ACTUATOR_COUNT] = {}; // each index is a number so you can't bitmask it
+    uint8_t actuator_sensor[MAX_ACTUATOR_COUNT] = {}; // each index is a number so you can't bitmask it
     uint8_t sensor_activated[MAX_SENSOR_COUNT] = {}; /*
                                                       * Tells which sensors are installed
                                                       * [1:0]: Light sensors
@@ -93,6 +107,7 @@ main(void){
     for (int i = 0; i < LIGHT_SENSOR_COUNT && i < 2; i++) sensor_activated[i] = 1; // validate light sensors
     for (int i = 2; i < DHT_SENSOR_COUNT + 2 && i < 6; i++) sensor_activated[i] = 1; // validate humidity sensors
     for (int i = 6; i < TEMP_SENSOR_COUNT + 6 && i < 10; i++) sensor_activated[i] = 1; // validate temperature sensors
+
 #ifdef DEBUG
     DEBUG_PUTS_P("MAIN: Initialization complete, ready to recieve commands\r\n");
 #endif
@@ -116,7 +131,7 @@ main(void){
         else if (parser_flags.get_info) {
             sprintf(buf, "ND:L=%d D=%d T=%d\r\n",
                     LIGHT_SENSOR_COUNT, DHT_SENSOR_COUNT, TEMP_SENSOR_COUNT);
-            S_RADIO_PUTS(buf);
+            S_PUTS(buf, 0);
             buf[0] = '\0';
             parser_flags.get_info = 0;
         }
@@ -147,7 +162,7 @@ main(void){
             }
 #endif // TEMP_SENSOR
             sprintf(buf, "%s%s%s\r\n", strlight, strdht, strtemp);
-            S_RADIO_PUTS(buf);
+            S_PUTS(buf, 0);
             buf[0] = '\0';
             parser_flags.measure_all = 0;
         }
@@ -213,42 +228,206 @@ main(void){
             parser_flags.measure_dht_humidity=0;
         }
 #endif //DHT_SENSOR
+        else if (parser_flags.set_actuator_onoff) {
+            if (!parser_flags.command_error_syntax) {
+                int actuatorbitmask = parser_flags.set_actuator_onoff;
+                int actuator = 0;
+                for (int i = 0;; i++) { // un-bitmask the value
+                    // (is that
+                    // even a
+                    // word?)
+                    if (_BV(i) == actuatorbitmask) {
+                        actuator = i;
+                        break;
+                    }
+                }
+                if (actuator < ACTUATOR_COUNT) {
+                    // if we got a zero, make this bit 1, else make it 0
+                    if (!parser_flags.value_buffer) actuator_onoff &= ~actuatorbitmask;
+                    else actuator_onoff |= actuatorbitmask;
+                    sprintf_P(buf, PSTR("set: AO%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
+                } else {
+                    RADIO_PUTS_P(COMMAND_ERROR);
+                }
+            }
+            parser_flags.set_actuator_onoff = 0;
+        }
+        else if (parser_flags.get_actuator_onoff) {
+            int actuatorbitmask = parser_flags.get_actuator_onoff;
+            int actuator = 0;
+            for (int i = 0;; i++) { // un-bitmask the value
+                // (is that
+                // even a
+                // word?)
+                if (_BV(i) == actuatorbitmask) {
+                    actuator = i;
+                    break;
+                }
+            }
+            if (actuator < ACTUATOR_COUNT) {
+                sprintf_P(buf, PSTR("AO%d=%s\r\n"), actuator, actuator_onoff & actuatorbitmask ? "1" : "0");
+            } else {
+                RADIO_PUTS_P(COMMAND_ERROR);
+            }
+            parser_flags.get_actuator_onoff = 0;
+        }
+        else if (parser_flags.set_actuator_armdisarm) {
+            if (!parser_flags.command_error_syntax) {
+                int actuatorbitmask = parser_flags.set_actuator_armdisarm;
+                int actuator = 0;
+                for (int i = 0;; i++) { // un-bitmask the value
+                    // (is that
+                    // even a
+                    // word?)
+                    if (_BV(i) == actuatorbitmask) {
+                        actuator = i;
+                        break;
+                    }
+                }
+                if (actuator < ACTUATOR_COUNT) {
+                    // if we got a zero, make this bit 1, else make it 0
+                    if (!parser_flags.value_buffer) actuator_armdisarm &= ~actuatorbitmask;
+                    else actuator_armdisarm |= actuatorbitmask;
+                    sprintf_P(buf, PSTR("set: AA%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
+                } else {
+                    RADIO_PUTS_P(COMMAND_ERROR);
+                }
+            }
+            parser_flags.set_actuator_armdisarm = 0;
+        }
+        else if (parser_flags.get_actuator_armdisarm) {
+            int actuatorbitmask = parser_flags.get_actuator_armdisarm;
+            int actuator = 0;
+            for (int i = 0;; i++) { // un-bitmask the value
+                // (is that
+                // even a
+                // word?)
+                if (_BV(i) == actuatorbitmask) {
+                    actuator = i;
+                    break;
+                }
+            }
+            if (actuator < ACTUATOR_COUNT) {
+                sprintf_P(buf, PSTR("AA%d=%s\r\n"), actuator, actuator_armdisarm & actuatorbitmask ? "1" : "0");
+            } else {
+                RADIO_PUTS_P(COMMAND_ERROR);
+            }
+            parser_flags.get_actuator_armdisarm = 0;
+        }
         else if (parser_flags.set_actuator_setpoint) {
-            // TODO
-            sprintf_P(buf, PSTR("set to: %d\r\n"), (int) 0);
-#ifdef DEBUG
-            DEBUG_PUTS_P("MAIN: set_setpoint\r\n");
-            DEBUG_PUTS(buf);
-#endif
+            if (!parser_flags.command_error_syntax) {
+                int actuatorbitmask = parser_flags.set_actuator_setpoint;
+                int actuator = 0;
+                for (int i = 0;; i++) { // un-bitmask the value
+                    // (is that
+                    // even a
+                    // word?)
+                    if (_BV(i) == actuatorbitmask) {
+                        actuator = i;
+                        break;
+                    }
+                }
+                if (actuator < ACTUATOR_COUNT) {
+                    actuator_setpoint[actuator] = parser_flags.value_buffer;
+                    sprintf(buf, "set: AP%d=%d\r\n", actuator, parser_flags.value_buffer);
+                    S_PUTS(buf, 0);
+                    buf[0] = '\0';
+                } else {
+                    RADIO_PUTS_P(COMMAND_ERROR);
+                }
+            }
             parser_flags.set_actuator_setpoint = 0;
         }
         else if (parser_flags.get_actuator_setpoint) {
-            // TODO
-            sprintf_P(buf, PSTR("S=%d\r\n"), (int) 0);
-#ifdef DEBUG
-            DEBUG_PUTS_P("MAIN: get_setpoint\r\n");
-            DEBUG_PUTS(buf);
-#endif
+            int actuatorbitmask = parser_flags.get_actuator_setpoint;
+            int actuator = 0;
+            for (int i = 0;; i++) { // un-bitmask the value
+                // (is that
+                // even a
+                // word?)
+                if (_BV(i) == actuatorbitmask) {
+                    actuator = i;
+                    break;
+                }
+            }
+            if (actuator < ACTUATOR_COUNT) {
+                sprintf_P(buf, PSTR("AP%d=%d\r\n"), actuator, actuator_setpoint[actuator]);
+            } else {
+                RADIO_PUTS_P(COMMAND_ERROR);
+            }
             parser_flags.get_actuator_setpoint = 0;
         }
-        else if (parser_flags.command_error_syntax) {
+        else if (parser_flags.set_actuator_choosesensor) {
+            if (!parser_flags.command_error_syntax) {
+                int actuatorbitmask = parser_flags.set_actuator_choosesensor;
+                int actuator = 0;
+                for (int i = 0;; i++) { // un-bitmask the value
+                    // (is that
+                    // even a
+                    // word?)
+                    if (_BV(i) == actuatorbitmask) {
+                        actuator = i;
+                        break;
+                    }
+                }
+                // check that the sensor we want to base off of is actually
+                // installed
+                if (actuator < ACTUATOR_COUNT && sensor_activated[parser_flags.value_buffer]) {
+                    int tempi = parser_flags.value_buffer;
+                    actuator_sensor[actuator] = tempi;
+                    char tempc = tempi < 2 ? 'L' : tempi < 6 ? 'D' : 'T'; // which sensor?
+                    tempi -= tempc == 'L' ? 0 : tempc == 'D' ? 2 : 6; // out of the type of sensor, which one?
+                    sprintf_P(buf, PSTR("set: AS%d=%c%d\r\n"), actuator, tempc, tempi);
+                } else {
+                    RADIO_PUTS_P(COMMAND_ERROR);
+                }
+            }
+            parser_flags.set_actuator_choosesensor = 0;
+        }
+        else if (parser_flags.get_actuator_choosesensor) {
+            int actuatorbitmask = parser_flags.get_actuator_choosesensor;
+            int actuator = 0;
+            for (int i = 0;; i++) { // un-bitmask the value
+                // (is that
+                // even a
+                // word?)
+                if (_BV(i) == actuatorbitmask) {
+                    actuator = i;
+                    break;
+                }
+            }
+            if (actuator < ACTUATOR_COUNT) {
+                int tempi = actuator_sensor[actuator];
+                char tempc = tempi < 2 ? 'L' : tempi < 6 ? 'D' : 'T'; // which sensor?
+                tempi -= tempc == 'L' ? 0 : tempc == 'D' ? 2 : 6; // out of the type of sensor, which one?
+                sprintf_P(buf, PSTR("AS%d=%c%d\r\n"), actuator, tempc, tempi);
+            } else {
+                RADIO_PUTS_P(COMMAND_ERROR);
+            }
+            parser_flags.get_actuator_choosesensor = 0;
+        }
+        if (parser_flags.command_error_syntax) {
             sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
 #ifdef DEBUG
             DEBUG_PUTS_P("MAIN: parser_flags.command_error_syntax=1\r\n");
 #endif
             parser_flags.command_error_syntax = 0;
         }
-        if(buf[0]){
+        else if(buf[0]){
             RADIO_PUTS(buf);
             buf[0]='\0';
         }
         if (ledcount-- <= 0) {
-            ledcount = F_CPU / 1e2;
+            ledcount = F_CPU / 10;
 #ifdef LIGHT_SENSOR
             light = I2CReadValue();
-            //if (light <= parser_flags.var_setpoint * 0.8) LEDPORT |= _BV(LED);
-            //else if (light >= parser_flags.var_setpoint * 1.2) LEDPORT &= ~_BV(LED);
 #endif //LIGHT_SENSOR
+#ifdef DHT_SENSOR
+            dht_read_data(&d, &dht_temp, &dht_hum);
+#endif //DHT_SENSOR
+#ifdef TEMP_SENSOR
+            temp = getTemperatureC();
+#endif //TEMP_SENSOR
         }
     }
 }

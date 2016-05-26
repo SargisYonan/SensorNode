@@ -23,6 +23,8 @@ struct flags{
     uint8_t command_recieved:1;
     uint8_t command_error_syntax:1;
     uint16_t value_buffer; // contains a number that was read while parsing the current command
+    uint8_t set_actuator_choosesensor; // 8 bits for 8 actuators
+    uint8_t get_actuator_choosesensor; // 8 bits for 8 actuators
     uint8_t set_actuator_setpoint; // 8 bits for 8 actuators
     uint8_t get_actuator_setpoint; // 8 bits for 8 actuators
     uint8_t set_actuator_onoff; // 8 bits for 8 actuators
