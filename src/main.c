@@ -58,16 +58,30 @@ serial_init(void){
 
 #define COMMAND_ERROR "BAD COMMAND\r\n"
 
-#define LED PB7
-#define LEDDDR DDRB
-#define LEDPORT PORTB
+#define ACTUATOR0 PB0
+#define ACTUATOR1 PB1
+#define ACTUATOR2 PB2
+#define ACTUATOR3 PB3
+#define ACTUATOR4 PB4
+#define ACTUATOR5 PB5
+#define ACTUATOR6 PB6
+#define ACTUATOR7 PB7
+#define ACTUATORDDR DDRB
+#define ACTUATORPORT PORTB
 
 int
 main(void){
-    char buf[128];
+    char buf[1024];
     buf[0] = '\0';
     uint32_t ledcount = 0; // counter to slow down LED access
-    LEDDDR |= _BV(LED);
+    if (ACTUATOR_COUNT > 0) ACTUATORDDR |= _BV(ACTUATOR0);
+    if (ACTUATOR_COUNT > 1) ACTUATORDDR |= _BV(ACTUATOR1);
+    if (ACTUATOR_COUNT > 2) ACTUATORDDR |= _BV(ACTUATOR2);
+    if (ACTUATOR_COUNT > 3) ACTUATORDDR |= _BV(ACTUATOR3);
+    if (ACTUATOR_COUNT > 4) ACTUATORDDR |= _BV(ACTUATOR4);
+    if (ACTUATOR_COUNT > 5) ACTUATORDDR |= _BV(ACTUATOR5);
+    if (ACTUATOR_COUNT > 6) ACTUATORDDR |= _BV(ACTUATOR6);
+    if (ACTUATOR_COUNT > 7) ACTUATORDDR |= _BV(ACTUATOR7);
 #ifdef DHT_SENSOR
     float dht_hum, dht_temp;
     struct dht22 d;
@@ -94,6 +108,8 @@ main(void){
         for(;;);
     }
     // the following 4 are for storing settings for the sensors
+    uint8_t actuator_ports[MAX_ACTUATOR_COUNT] = {ACTUATOR0, ACTUATOR1, ACTUATOR2, ACTUATOR3,
+        ACTUATOR4, ACTUATOR5, ACTUATOR6, ACTUATOR7};
     uint8_t actuator_onoff = 0; //bitmask it
     uint8_t actuator_armdisarm = 0; //bitmask it
     uint16_t actuator_setpoint[MAX_ACTUATOR_COUNT] = {}; // each index is a number so you can't bitmask it
@@ -129,8 +145,8 @@ main(void){
             RADIO_PUTS_P(COMMAND_ERROR);
         }
         else if (parser_flags.get_info) {
-            sprintf(buf, "ND:L=%d D=%d T=%d\r\n",
-                    LIGHT_SENSOR_COUNT, DHT_SENSOR_COUNT, TEMP_SENSOR_COUNT);
+            sprintf(buf, "ND:L=%d D=%d T=%d A=%d\r\n",
+                    LIGHT_SENSOR_COUNT, DHT_SENSOR_COUNT, TEMP_SENSOR_COUNT, ACTUATOR_COUNT);
             S_PUTS(buf, 0);
             buf[0] = '\0';
             parser_flags.get_info = 0;
@@ -139,7 +155,8 @@ main(void){
             char strlight[64] = "";
             char strdht[64] = "";
             char strtemp[64] = "";
-            char str[64] = "";
+            char stract[128] = "";
+            char str[128] = "";
 #ifdef LIGHT_SENSOR
             for (int i = 0; i < 2 && sensor_activated[i]; i++) {
                 light = I2CReadValue();
@@ -161,7 +178,14 @@ main(void){
                 strcat(strtemp, str);
             }
 #endif // TEMP_SENSOR
-            sprintf(buf, "%s%s%s\r\n", strlight, strdht, strtemp);
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                sprintf(str, "AO%d=%d AA%d=%d AP%d=%d AS%d=%c%d ", i, (actuator_onoff & _BV(i)) >> i,
+                        i, (actuator_armdisarm & _BV(i)) >> i, i, actuator_setpoint[i], i,
+                        actuator_sensor[i] < 2 ? 'L' : actuator_sensor[i] < 6 ? 'D' : 'T',
+                        actuator_sensor[i] < 2 ? actuator_sensor[i] : actuator_sensor[i] < 6 ? actuator_sensor[i] - 2 : actuator_sensor[i] - 6);
+                strcat(stract, str);
+            }
+            sprintf(buf, "%s%s%s%s\r\n", strlight, strdht, strtemp, stract);
             S_PUTS(buf, 0);
             buf[0] = '\0';
             parser_flags.measure_all = 0;
@@ -418,7 +442,7 @@ main(void){
             buf[0]='\0';
         }
         if (ledcount-- <= 0) {
-            ledcount = F_CPU / 10;
+            ledcount = F_CPU / 1e2;
 #ifdef LIGHT_SENSOR
             light = I2CReadValue();
 #endif //LIGHT_SENSOR
@@ -428,6 +452,41 @@ main(void){
 #ifdef TEMP_SENSOR
             temp = getTemperatureC();
 #endif //TEMP_SENSOR
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                if (actuator_onoff & _BV(i)) {
+                    if (actuator_armdisarm & _BV(i)) { // force on
+                        ACTUATORPORT |= _BV(actuator_ports[i]);
+                    } else { // setpoint based
+                        if (actuator_sensor[i] < 2) { // this works off an assumption of at most one of each type of sensor. light sensor here
+#ifdef LIGHT_SENSOR
+                            if (light < 0.8 * actuator_setpoint[i]) {
+                                ACTUATORPORT |= _BV(actuator_ports[i]);
+                            } else if (light > 1.2 * actuator_setpoint[i]) {
+                                ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                            }
+#endif // LIGHT_SENSOR
+                        } else if (actuator_sensor[i] < 6) { // dht sensor (in this case we assume you want to work off humidity)
+#ifdef DHT_SENSOR
+                            if (dht_hum < 0.8 * actuator_setpoint[i]) {
+                                ACTUATORPORT |= _BV(actuator_ports[i]);
+                            } else if (dht_hum > 1.2 * actuator_setpoint[i]) {
+                                ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                            }
+#endif // DHT_SENSOR
+                        } else { // temp sensor, may change if more sensors are added to system
+#ifdef TEMP_SENSOR
+                            if (temp < 0.8 * actuator_setpoint[i]) {
+                                ACTUATORPORT |= _BV(actuator_ports[i]);
+                            } else if (temp > 1.2 * actuator_setpoint[i]) {
+                                ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                            }
+#endif // TEMP_SENSOR
+                        }
+                    }
+                } else { // force off
+                    ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                }
+            }
         }
     }
 }
