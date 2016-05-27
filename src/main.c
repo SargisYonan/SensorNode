@@ -112,6 +112,7 @@ main(void){
         ACTUATOR4, ACTUATOR5, ACTUATOR6, ACTUATOR7};
     uint8_t actuator_onoff = 0; //bitmask it
     uint8_t actuator_armdisarm = 0; //bitmask it
+    uint8_t actuator_status = 0;
     uint16_t actuator_setpoint[MAX_ACTUATOR_COUNT] = {}; // each index is a number so you can't bitmask it
     uint8_t actuator_sensor[MAX_ACTUATOR_COUNT] = {}; // each index is a number so you can't bitmask it
     uint8_t sensor_activated[MAX_SENSOR_COUNT] = {}; /*
@@ -120,6 +121,16 @@ main(void){
                                                       * [5:2]: DHT Sensors
                                                       * [9:6]: Temp Sensors
                                                       */
+    int first_sensor_activated = 0;
+    for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
+        if (sensor_activated[i]) {
+            first_sensor_activated = i;
+            break;
+        }
+    }
+    for (int i = 0; i < MAX_ACTUATOR_COUNT; i++) {
+        actuator_sensor[i] = first_sensor_activated;
+    }
     for (int i = 0; i < LIGHT_SENSOR_COUNT && i < 2; i++) sensor_activated[i] = 1; // validate light sensors
     for (int i = 2; i < DHT_SENSOR_COUNT + 2 && i < 6; i++) sensor_activated[i] = 1; // validate humidity sensors
     for (int i = 6; i < TEMP_SENSOR_COUNT + 6 && i < 10; i++) sensor_activated[i] = 1; // validate temperature sensors
@@ -179,10 +190,11 @@ main(void){
             }
 #endif // TEMP_SENSOR
             for (int i = 0; i < ACTUATOR_COUNT; i++) {
-                sprintf(str, "AO%d=%d AA%d=%d AP%d=%d AS%d=%c%d ", i, (actuator_onoff & _BV(i)) >> i,
+                sprintf(str, "AO%d=%d AA%d=%d AP%d=%d AS%d=%c%d AT%d=%d ", i, (actuator_onoff & _BV(i)) >> i,
                         i, (actuator_armdisarm & _BV(i)) >> i, i, actuator_setpoint[i], i,
                         actuator_sensor[i] < 2 ? 'L' : actuator_sensor[i] < 6 ? 'D' : 'T',
-                        actuator_sensor[i] < 2 ? actuator_sensor[i] : actuator_sensor[i] < 6 ? actuator_sensor[i] - 2 : actuator_sensor[i] - 6);
+                        actuator_sensor[i] < 2 ? actuator_sensor[i] : actuator_sensor[i] < 6 ? actuator_sensor[i] - 2 : actuator_sensor[i] - 6,
+                        i, (actuator_status & _BV(i)) >> i);
                 strcat(stract, str);
             }
             sprintf(buf, "%s%s%s%s\r\n", strlight, strdht, strtemp, stract);
@@ -269,7 +281,7 @@ main(void){
                     // if we got a zero, make this bit 1, else make it 0
                     if (!parser_flags.value_buffer) actuator_onoff &= ~actuatorbitmask;
                     else actuator_onoff |= actuatorbitmask;
-                    sprintf_P(buf, PSTR("set: AO%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
+                    sprintf_P(buf, PSTR("set AO%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
                 } else {
                     RADIO_PUTS_P(COMMAND_ERROR);
                 }
@@ -312,7 +324,7 @@ main(void){
                     // if we got a zero, make this bit 1, else make it 0
                     if (!parser_flags.value_buffer) actuator_armdisarm &= ~actuatorbitmask;
                     else actuator_armdisarm |= actuatorbitmask;
-                    sprintf_P(buf, PSTR("set: AA%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
+                    sprintf_P(buf, PSTR("set AA%d=%s\r\n"), actuator, parser_flags.value_buffer ? "1" : "0");
                 } else {
                     RADIO_PUTS_P(COMMAND_ERROR);
                 }
@@ -353,7 +365,7 @@ main(void){
                 }
                 if (actuator < ACTUATOR_COUNT) {
                     actuator_setpoint[actuator] = parser_flags.value_buffer;
-                    sprintf(buf, "set: AP%d=%d\r\n", actuator, parser_flags.value_buffer);
+                    sprintf(buf, "set AP%d=%d\r\n", actuator, parser_flags.value_buffer);
                     S_PUTS(buf, 0);
                     buf[0] = '\0';
                 } else {
@@ -401,7 +413,7 @@ main(void){
                     actuator_sensor[actuator] = tempi;
                     char tempc = tempi < 2 ? 'L' : tempi < 6 ? 'D' : 'T'; // which sensor?
                     tempi -= tempc == 'L' ? 0 : tempc == 'D' ? 2 : 6; // out of the type of sensor, which one?
-                    sprintf_P(buf, PSTR("set: AS%d=%c%d\r\n"), actuator, tempc, tempi);
+                    sprintf_P(buf, PSTR("set AS%d=%c%d\r\n"), actuator, tempc, tempi);
                 } else {
                     RADIO_PUTS_P(COMMAND_ERROR);
                 }
@@ -430,6 +442,22 @@ main(void){
             }
             parser_flags.get_actuator_choosesensor = 0;
         }
+        else if (parser_flags.get_actuator_status) {
+            int actuatorbitmask = parser_flags.get_actuator_choosesensor;
+            int actuator = 0;
+            for (int i = 0;; i++) { // un-bitmask the value
+                // (is that
+                // even a
+                // word?)
+                if (_BV(i) == actuatorbitmask) {
+                    actuator = i;
+                    break;
+                }
+            }
+            if (actuator < ACTUATOR_COUNT) {
+                sprintf_P(buf, PSTR("AT%d=%d"), actuator, actuator_status & actuatorbitmask ? 1 : 0);
+            }
+        }
         if (parser_flags.command_error_syntax) {
             sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
 #ifdef DEBUG
@@ -442,7 +470,7 @@ main(void){
             buf[0]='\0';
         }
         if (ledcount-- <= 0) {
-            ledcount = F_CPU / 1e2;
+            ledcount = F_CPU / 1e3;
 #ifdef LIGHT_SENSOR
             light = I2CReadValue();
 #endif //LIGHT_SENSOR
@@ -456,35 +484,43 @@ main(void){
                 if (actuator_onoff & _BV(i)) {
                     if (actuator_armdisarm & _BV(i)) { // force on
                         ACTUATORPORT |= _BV(actuator_ports[i]);
+                        actuator_status |= _BV(i);
                     } else { // setpoint based
                         if (actuator_sensor[i] < 2) { // this works off an assumption of at most one of each type of sensor. light sensor here
 #ifdef LIGHT_SENSOR
                             if (light < 0.8 * actuator_setpoint[i]) {
                                 ACTUATORPORT |= _BV(actuator_ports[i]);
+                                actuator_status |= _BV(i);
                             } else if (light > 1.2 * actuator_setpoint[i]) {
                                 ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                                actuator_status &= ~_BV(i);
                             }
 #endif // LIGHT_SENSOR
                         } else if (actuator_sensor[i] < 6) { // dht sensor (in this case we assume you want to work off humidity)
 #ifdef DHT_SENSOR
                             if (dht_hum < 0.8 * actuator_setpoint[i]) {
                                 ACTUATORPORT |= _BV(actuator_ports[i]);
+                                actuator_status |= _BV(i);
                             } else if (dht_hum > 1.2 * actuator_setpoint[i]) {
                                 ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                                actuator_status &= ~_BV(i);
                             }
 #endif // DHT_SENSOR
                         } else { // temp sensor, may change if more sensors are added to system
 #ifdef TEMP_SENSOR
                             if (temp < 0.8 * actuator_setpoint[i]) {
                                 ACTUATORPORT |= _BV(actuator_ports[i]);
+                                actuator_status |= _BV(i);
                             } else if (temp > 1.2 * actuator_setpoint[i]) {
                                 ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                                actuator_status &= ~_BV(i);
                             }
 #endif // TEMP_SENSOR
                         }
                     }
                 } else { // force off
                     ACTUATORPORT &= ~_BV(actuator_ports[i]);
+                    actuator_status &= ~_BV(i);
                 }
             }
         }

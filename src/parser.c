@@ -549,7 +549,34 @@ void parse_command() {
             }
         }
         if (!parser_flags.set_actuator_choosesensor && !parser_flags.get_actuator_choosesensor) parsed = 0;
-
+    }
+    if (!parsed && strcasestr(parser_buffer, "AT")) { // sensor status
+        parsed = 1;
+        if (strcasestr(parser_buffer, "AT0?")) {
+            parser_flags.get_actuator_status = _BV(0);
+        }
+        else if (strcasestr(parser_buffer, "AT1?")) {
+            parser_flags.get_actuator_status = _BV(1);
+        }
+        else if (strcasestr(parser_buffer, "AT2?")) {
+            parser_flags.get_actuator_status = _BV(2);
+        }
+        else if (strcasestr(parser_buffer, "AT3?")) {
+            parser_flags.get_actuator_status = _BV(3);
+        }
+        else if (strcasestr(parser_buffer, "AT4?")) {
+            parser_flags.get_actuator_status = _BV(4);
+        }
+        else if (strcasestr(parser_buffer, "AT5?")) {
+            parser_flags.get_actuator_status = _BV(5);
+        }
+        else if (strcasestr(parser_buffer, "AT6?")) {
+            parser_flags.get_actuator_status = _BV(6);
+        }
+        else if (strcasestr(parser_buffer, "AT7?")) {
+            parser_flags.get_actuator_status = _BV(7);
+        }
+        if (!parser_flags.get_actuator_status) parsed = 0;
     }
     if (!parsed) {
         parser_flags.command_error=1;

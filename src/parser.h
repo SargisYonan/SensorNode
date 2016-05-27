@@ -31,6 +31,7 @@ struct flags{
     uint8_t get_actuator_onoff; // 8 bits for 8 actuators
     uint8_t set_actuator_armdisarm; // 8 bits for 8 actuators
     uint8_t get_actuator_armdisarm; // 8 bits for 8 actuators
+    uint8_t get_actuator_status; // 8 bits for 8 actuators
     uint8_t get_info:1;
     uint8_t measure_all:1;
 #ifdef DHT_SENSOR
