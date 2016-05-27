@@ -443,7 +443,7 @@ main(void){
             parser_flags.get_actuator_choosesensor = 0;
         }
         else if (parser_flags.get_actuator_status) {
-            int actuatorbitmask = parser_flags.get_actuator_choosesensor;
+            int actuatorbitmask = parser_flags.get_actuator_status;
             int actuator = 0;
             for (int i = 0;; i++) { // un-bitmask the value
                 // (is that
@@ -455,8 +455,11 @@ main(void){
                 }
             }
             if (actuator < ACTUATOR_COUNT) {
-                sprintf_P(buf, PSTR("AT%d=%d"), actuator, actuator_status & actuatorbitmask ? 1 : 0);
+                sprintf_P(buf, PSTR("AT%d=%d\r\n"), actuator, actuator_status & actuatorbitmask ? 1 : 0);
+            } else {
+                RADIO_PUTS_P(COMMAND_ERROR);
             }
+            parser_flags.get_actuator_status = 0;
         }
         if (parser_flags.command_error_syntax) {
             sprintf_P(buf, PSTR("BAD COMMAND 1\r\n"));
