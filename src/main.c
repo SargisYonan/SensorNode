@@ -121,7 +121,12 @@ main(void){
                                                       * [5:2]: DHT Sensors
                                                       * [9:6]: Temp Sensors
                                                       */
-    int first_sensor_activated = 0;
+
+    for (int i = 0; i < LIGHT_SENSOR_COUNT && i < 2; i++) sensor_activated[i] = 1; // validate light sensors
+    for (int i = 2; i < DHT_SENSOR_COUNT + 2 && i < 6; i++) sensor_activated[i] = 1; // validate humidity sensors
+    for (int i = 6; i < TEMP_SENSOR_COUNT + 6 && i < 10; i++) sensor_activated[i] = 1; // validate temperature sensors
+
+    int first_sensor_activated = 0; // make sure that you default to an activated sensor
     for (int i = 0; i < MAX_SENSOR_COUNT; i++) {
         if (sensor_activated[i]) {
             first_sensor_activated = i;
@@ -131,10 +136,6 @@ main(void){
     for (int i = 0; i < MAX_ACTUATOR_COUNT; i++) {
         actuator_sensor[i] = first_sensor_activated;
     }
-    for (int i = 0; i < LIGHT_SENSOR_COUNT && i < 2; i++) sensor_activated[i] = 1; // validate light sensors
-    for (int i = 2; i < DHT_SENSOR_COUNT + 2 && i < 6; i++) sensor_activated[i] = 1; // validate humidity sensors
-    for (int i = 6; i < TEMP_SENSOR_COUNT + 6 && i < 10; i++) sensor_activated[i] = 1; // validate temperature sensors
-
 #ifdef DEBUG
     DEBUG_PUTS_P("MAIN: Initialization complete, ready to recieve commands\r\n");
 #endif
