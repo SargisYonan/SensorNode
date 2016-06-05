@@ -171,6 +171,7 @@ main(void){
             }
             strcat(buf, "\r\n");
             S_PUTS(buf, 0);
+            buf[0] = '\0';
             parser_flags.get_all_actuator_onoff = 0;
         }
         else if (parser_flags.get_all_actuator_armdisarm) {
@@ -181,6 +182,7 @@ main(void){
             }
             strcat(buf, "\r\n");
             S_PUTS(buf, 0);
+            buf[0] = '\0';
             parser_flags.get_all_actuator_armdisarm = 0;
         }
         else if (parser_flags.get_all_actuator_setpoint) {
@@ -191,6 +193,7 @@ main(void){
             }
             strcat(buf, "\r\n");
             S_PUTS(buf, 0);
+            buf[0] = '\0';
             parser_flags.get_all_actuator_setpoint = 0;
         }
         else if (parser_flags.get_all_actuator_choosesensor) {
@@ -204,6 +207,7 @@ main(void){
             }
             strcat(buf, "\r\n");
             S_PUTS(buf, 0);
+            buf[0] = '\0';
             parser_flags.get_all_actuator_choosesensor = 0;
         }
         else if (parser_flags.get_all_actuator_status) {
@@ -214,6 +218,7 @@ main(void){
             }
             strcat(buf, "\r\n");
             S_PUTS(buf, 0);
+            buf[0] = '\0';
             parser_flags.get_all_actuator_status = 0;
         }
         else if (parser_flags.measure_all) {
