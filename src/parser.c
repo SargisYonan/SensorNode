@@ -90,6 +90,26 @@ void parse_command() {
                          * index to read the number from
                          */
 
+    if(!parsed && strcasestr(parser_buffer, "AO?")){
+        parser_flags.get_all_actuator_onoff = 1;
+        parsed = 1;
+    }
+    if(!parsed && strcasestr(parser_buffer, "AA?")){
+        parser_flags.get_all_actuator_armdisarm = 1;
+        parsed = 1;
+    }
+    if(!parsed && strcasestr(parser_buffer, "AP?")){
+        parser_flags.get_all_actuator_setpoint = 1;
+        parsed = 1;
+    }
+    if(!parsed && strcasestr(parser_buffer, "AS?")){
+        parser_flags.get_all_actuator_choosesensor = 1;
+        parsed = 1;
+    }
+    if(!parsed && strcasestr(parser_buffer, "AT?")){
+        parser_flags.get_all_actuator_status = 1;
+        parsed = 1;
+    }
     if(!parsed && strcasestr(parser_buffer, "I?")){
         parser_flags.get_info = 1;
         parsed = 1;

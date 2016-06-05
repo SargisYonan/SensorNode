@@ -33,6 +33,11 @@ struct flags{
     uint8_t get_actuator_armdisarm; // 8 bits for 8 actuators
     uint8_t get_actuator_status; // 8 bits for 8 actuators
     uint8_t get_info:1;
+    uint8_t get_all_actuator_choosesensor:1;
+    uint8_t get_all_actuator_setpoint:1;
+    uint8_t get_all_actuator_onoff:1;
+    uint8_t get_all_actuator_armdisarm:1;
+    uint8_t get_all_actuator_status:1;
     uint8_t measure_all:1;
 #ifdef DHT_SENSOR
     uint8_t measure_dht_temperature:4;

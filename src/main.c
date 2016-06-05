@@ -163,6 +163,59 @@ main(void){
             buf[0] = '\0';
             parser_flags.get_info = 0;
         }
+        else if (parser_flags.get_all_actuator_onoff) {
+            char str[128] = "";
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                sprintf(str, "AO%d=%d ", i, actuator_onoff & _BV(i));
+                strcat(buf, str);
+            }
+            strcat(buf, "\r\n");
+            S_PUTS(buf, 0);
+            parser_flags.get_all_actuator_onoff = 0;
+        }
+        else if (parser_flags.get_all_actuator_armdisarm) {
+            char str[128] = "";
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                sprintf(str, "AA%d=%d ", i, actuator_armdisarm & _BV(i));
+                strcat(buf, str);
+            }
+            strcat(buf, "\r\n");
+            S_PUTS(buf, 0);
+            parser_flags.get_all_actuator_armdisarm = 0;
+        }
+        else if (parser_flags.get_all_actuator_setpoint) {
+            char str[128] = "";
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                sprintf(str, "AP%d=%d ", i, actuator_setpoint[i]);
+                strcat(buf, str);
+            }
+            strcat(buf, "\r\n");
+            S_PUTS(buf, 0);
+            parser_flags.get_all_actuator_setpoint = 0;
+        }
+        else if (parser_flags.get_all_actuator_choosesensor) {
+            char str[128] = "";
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                int tempi = actuator_sensor[i];
+                char tempc = tempi < 2 ? 'L' : tempi < 6 ? 'D' : 'T'; // which sensor?
+                tempi -= tempc == 'L' ? 0 : tempc == 'D' ? 2 : 6; // out of the type of sensor, which one?
+                sprintf(str, "AS%d=%c%d ", i, tempc, tempi);
+                strcat(buf, str);
+            }
+            strcat(buf, "\r\n");
+            S_PUTS(buf, 0);
+            parser_flags.get_all_actuator_choosesensor = 0;
+        }
+        else if (parser_flags.get_all_actuator_status) {
+            char str[128] = "";
+            for (int i = 0; i < ACTUATOR_COUNT; i++) {
+                sprintf(str, "AT%d=%d ", i, actuator_status & _BV(i));
+                strcat(buf, str);
+            }
+            strcat(buf, "\r\n");
+            S_PUTS(buf, 0);
+            parser_flags.get_all_actuator_status = 0;
+        }
         else if (parser_flags.measure_all) {
             char strlight[64] = "";
             char strdht[64] = "";
