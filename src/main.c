@@ -24,9 +24,7 @@
 int main(void){
   sei();
   
-  uart_init(19200);
-
-  uart_puts("testing123\r\n");
+  uart_init();
 
   while (1) {
     unsigned char data = uart_getc();
