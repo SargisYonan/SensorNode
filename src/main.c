@@ -22,10 +22,15 @@
 #define LEDPORT PORTB
 
 int main(void){
-  uart_init();
+  sei();
+  
+  uart_init(19200);
+
+  uart_puts("testing123\r\n");
 
   while (1) {
     unsigned char data = uart_getc();
+    if (data == '\0') continue; // no data;
     uart_putc(data);
     if (data == '\r') uart_putc('\n');
   }
