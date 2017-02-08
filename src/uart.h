@@ -5,7 +5,7 @@ void uart_init(void);
 
 void uart_putc(unsigned char);
 
-void uart_puts(char *);
+void uart_puts(unsigned char *);
 
 unsigned char uart_getc(void);
 
