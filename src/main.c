@@ -26,11 +26,23 @@ int main(void){
   
   uart_init();
 
+  unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
+  uint16_t cmd_index = 0;
   while (1) {
+    // this way, it will point to the NULL character at the end
+    // as well as not count it as a written index
+    cmd_index += uart_ngetc(cmd, cmd_index, TX_BUF_SIZE);
+    if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
+      uart_puts(cmd);
+      uart_putc('\n');
+      cmd_index = 0; // restart the index to start a new command
+    }
+    /*
     unsigned char data = uart_getc();
     if (data == '\0') continue; // no data;
     uart_putc(data);
     if (data == '\r') uart_putc('\n');
+    */
   }
   return 0;
 }

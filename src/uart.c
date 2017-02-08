@@ -1,24 +1,8 @@
-#include <avr/io.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <util/delay.h>
-#include <avr/pgmspace.h>
-#include <stdio.h>
-#include <avr/interrupt.h>
-#include <string.h>
+#include "uart.h"
 
 #define BAUDRATE 19200U
 #define BAUD_PRESCALE (((F_CPU / (BAUDRATE * 16UL))) - 1)
 #define FREQ 16e6 // atmega2560 has a 16MHz crystal
-
-#ifndef RX_BUF_SIZE
-#define RX_BUF_SIZE 16
-#endif
-
-#ifndef TX_BUF_SIZE
-#define TX_BUF_SIZE 256
-#endif
 
 static unsigned char RXbuf[RX_BUF_SIZE]; // circular buffer
 static uint8_t RXhead, RXtail;
@@ -83,4 +67,31 @@ unsigned char uart_getc (void) {
   unsigned char data = RXbuf[RXhead];
   RXhead = (RXhead + 1) % RX_BUF_SIZE;
   return data;
+}
+
+// NOTE: User is responsible for making sure that: str_size - start > n
+// Also, if n > TX_BUF_SIZE, you will still read at most TX_BUF_SIZE bytes
+// str is string to be filled from start, n is max chars to read
+// will read either till n bytes, till '\r', or before '\0', whichever first
+// will append '\0' for you
+// RETURN: number of bytes read (not including '\0')
+//TODO: more generic for other styles of line endings
+uint16_t uart_ngetc (unsigned char *str, uint16_t start, uint16_t n) {
+  uint16_t bytes_read = 0;
+  if (n <= 0) return bytes_read; // why even...?
+  if (n > TX_BUF_SIZE) n = TX_BUF_SIZE;
+  unsigned char data;
+  while ((data = uart_getc()) != '\0') {
+    str[start++] = data;
+    if (++bytes_read == n) break; // finished reading n bytes
+    if (data == '\r') break; // end of the string
+  }
+  str[start] = '\0'; // add that NULL terminating char
+  return bytes_read;
+}
+
+// returns next thing in queue or NULL char
+unsigned char uart_rxpeak (void) {
+  if (RXhead == RXtail) return '\0';
+  return RXbuf[RXhead];
 }
