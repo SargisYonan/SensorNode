@@ -27,6 +27,6 @@ void uart_puts(unsigned char *);
 
 unsigned char uart_getc(void);
 
-uint16_t uart_ngetc(unsigned char *, uint16_t, uint16_t);
+uint16_t uart_ngetc(unsigned char *, uint16_t, uint16_t, uint16_t);
 
 #endif //_UART_H_

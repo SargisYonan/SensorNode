@@ -21,6 +21,9 @@
 #define LEDDDR DDRB
 #define LEDPORT PORTB
 
+#define COMMAND_LONG (unsigned char *) \
+  "COMMAND EXCEEDED TX_BUF_SIZE Characters\r\n"
+
 int main(void){
   sei();
   
@@ -31,7 +34,13 @@ int main(void){
   while (1) {
     // this way, it will point to the NULL character at the end
     // as well as not count it as a written index
-    cmd_index += uart_ngetc(cmd, cmd_index, TX_BUF_SIZE);
+    uint16_t bytes_read = uart_ngetc(cmd, cmd_index, TX_BUF_SIZE, TX_BUF_SIZE);
+    if (bytes_read == (uint16_t) -1) {
+      uart_puts(COMMAND_LONG);
+      cmd_index = 0;
+      continue;
+    }
+    cmd_index += bytes_read;
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
       uart_puts(cmd);
       uart_putc('\n');

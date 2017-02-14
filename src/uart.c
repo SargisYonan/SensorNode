@@ -76,12 +76,16 @@ unsigned char uart_getc (void) {
 // will append '\0' for you
 // RETURN: number of bytes read (not including '\0')
 //TODO: more generic for other styles of line endings
-uint16_t uart_ngetc (unsigned char *str, uint16_t start, uint16_t n) {
+uint16_t uart_ngetc (unsigned char *str, uint16_t start, uint16_t n,
+    uint16_t buf_size_max) {
   uint16_t bytes_read = 0;
   if (n <= 0) return bytes_read; // why even...?
   if (n > TX_BUF_SIZE) n = TX_BUF_SIZE;
   unsigned char data;
   while ((data = uart_getc()) != '\0') {
+    if (start >= buf_size_max) {
+      return (uint16_t) -1; // overflow error
+    }
     str[start++] = data;
     if (++bytes_read == n) break; // finished reading n bytes
     if (data == '\r') break; // end of the string
