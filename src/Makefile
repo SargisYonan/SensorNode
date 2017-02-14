@@ -42,7 +42,7 @@ LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
-MODULES = main uart
+MODULES = main uart module
 OBJECTS = $(MODULES:%=%.o)
 
 ######## OS Detection #########
