@@ -16,10 +16,14 @@
 #include "I2C_lib.h"
 #endif // LIGHT_SENSOR
 #include "uart.h"
+#include "module.h"
+#include "actuator.h"
 
 #define LED PB7
 #define LEDDDR DDRB
 #define LEDPORT PORTB
+
+#define MAX_DEVICES 100
 
 #define COMMAND_LONG (unsigned char *) \
   "COMMAND EXCEEDED TX_BUF_SIZE Characters\r\n"
@@ -29,8 +33,17 @@ int main(void){
   
   uart_init();
 
+  Module devices[MAX_DEVICES];
+  uint8_t devices_count = 0;
+  uint8_t type_cur_num = 0; // a number tracking the next device type to assign
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
+
+  // temporary hardcode
+  devices[devices_count++] = new_actuator(type_cur_num++);
+  uart_puts(devices[0].init());
+  //
+
   while (1) {
     // this way, it will point to the NULL character at the end
     // as well as not count it as a written index
@@ -42,8 +55,8 @@ int main(void){
     }
     cmd_index += bytes_read;
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
-      uart_puts(cmd);
-      uart_putc('\n');
+      uart_puts((unsigned char *) devices[0].write((void *) cmd));
+      //uart_putc('\n');
       cmd_index = 0; // restart the index to start a new command
     }
     /*

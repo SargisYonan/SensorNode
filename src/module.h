@@ -13,15 +13,15 @@
 typedef struct Module {
   uint8_t type_num; // determined through runtime based on order of creation
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
-  void *init; // init function
-  void *read; // read function
-  void *write; // write function
+  void *(*init)(void); // init function
+  void *(*read)(void); // read function
+  void *(*write)(void *); // write function
 } Module;
 
 Module new_module(void); // all modules are created with this function
 
 void *module_init(void); // default init function
 void *module_read(void); // default read function
-void *module_write(char *); // default write function
+void *module_write(void *); // default write function
 
 #endif

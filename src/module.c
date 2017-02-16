@@ -26,6 +26,6 @@ void *module_read() {
   return NULL;
 }
 
-void *module_write(char *write_data) {
+void *module_write(void *write_data) {
   return (void *) write_data;
 }
