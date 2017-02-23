@@ -40,8 +40,9 @@ int main(void){
   uint16_t cmd_index = 0;
 
   // temporary hardcode
-  devices[devices_count++] = new_actuator(type_cur_num++);
-  uart_puts(devices[0].init());
+  devices[devices_count++] = new_actuator(type_cur_num++, &PORTA, &PINA, &DDRA,
+      PA0);
+  uart_puts(devices[0].init(devices[0]));
   //
 
   while (1) {
@@ -55,7 +56,11 @@ int main(void){
     }
     cmd_index += bytes_read;
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
-      uart_puts((unsigned char *) devices[0].write((void *) cmd));
+      if (0 && strncmp((char *) cmd, "exit", 4) == 0) {
+        uart_puts(devices[0].destroy(devices[0]));
+        continue;
+      }
+      uart_puts((unsigned char *) devices[0].write(devices[0], (void *) cmd));
       //uart_putc('\n');
       cmd_index = 0; // restart the index to start a new command
     }

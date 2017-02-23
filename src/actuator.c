@@ -8,7 +8,8 @@ uint8_t actuator_type_num = -1; // needs to be set on first creation of Actuator
 // RETURNS:
 // the actuator with fields sest appropriately
 // or a default module if too many actuators already exist
-Actuator new_actuator(uint8_t cur_type_num) {
+Actuator new_actuator(uint8_t cur_type_num, volatile uint8_t *port,
+    volatile uint8_t *pin, volatile uint8_t *ddr, uint8_t reg_bit) {
   Actuator a = new_module();
   if (actuator_count >= ACTUATOR_MAX) {
     return a; // remember the key is that it has defaults set
@@ -18,27 +19,37 @@ Actuator new_actuator(uint8_t cur_type_num) {
   }
   a.type_num = actuator_type_num;
   a.index = actuator_count++;
+  a.port = port;
+  a.pin = pin;
+  a.ddr = ddr;
+  a.reg_bit = reg_bit;
   a.init = &actuator_init;
   a.write = &actuator_write;
+  a.destroy = &actuator_destroy;
   return a;
 }
 
 // currently a hardcoded solution
-void *actuator_init(void) {
-  DDRA |= _BV(PA0); // pin 22
+void *actuator_init(Actuator a) {
+  *a.ddr |= _BV(a.reg_bit); // pin 22
   return (void *) "Set PIN 22 (PORTA0) to be an output for an actuator\r\n";
 }
 
-void *actuator_write(void *origstr) {
+void *actuator_write(Actuator a, void *origstr) {
   char *str = (char *) origstr;
   if (str[0] == '0') {
-    PORTA &= ~_BV(PA0);
+    *a.port &= ~_BV(a.reg_bit);
     strncpy(str, "OFF\r\n", 6);
   } else if (str[0] == '1') {
-    PORTA |= _BV(PA0);
+    *a.port |= _BV(a.reg_bit);
     strncpy(str, "ON\r\n", 5);
   } else {
     strncpy(str, "INVALID\r\n", 10);
   }
   return origstr;
+}
+
+void *actuator_destroy(Actuator a) {
+  *a.ddr &= ~_BV(a.reg_bit);
+  return (void *) "PIN 22 is now cleared of any settings\r\n";
 }

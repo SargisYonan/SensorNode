@@ -13,15 +13,22 @@
 typedef struct Module {
   uint8_t type_num; // determined through runtime based on order of creation
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
-  void *(*init)(void); // init function
-  void *(*read)(void); // read function
-  void *(*write)(void *); // write function
+  volatile uint8_t * port; // address of The port this device is associated with
+  volatile uint8_t * pin; // address of The pin this device is associated with
+  volatile uint8_t * ddr; // address of The data direction register the device
+                // is associated with
+  uint8_t reg_bit; // bit of the above three registers to index into
+  void *(*init)(struct Module); // init function
+  void *(*read)(struct Module); // read function
+  void *(*write)(struct Module, void *); // write function
+  void *(*destroy)(struct Module); // destroy function
 } Module;
 
 Module new_module(void); // all modules are created with this function
 
-void *module_init(void); // default init function
-void *module_read(void); // default read function
-void *module_write(void *); // default write function
+void *module_init(Module); // default init function
+void *module_read(Module); // default read function
+void *module_write(Module, void *); // default write function
+void *module_destroy(Module); // default destroy function
 
 #endif
