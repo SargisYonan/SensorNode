@@ -37,6 +37,9 @@ void *actuator_init(Actuator a) {
 
 void *actuator_write(Actuator a, void *origstr) {
   char *str = (char *) origstr;
+  if (!(*a.ddr & _BV(a.reg_bit))) {
+    return "Cannot write to actuator: DDR set to input\r\n";
+  }
   if (str[0] == '0') {
     *a.port &= ~_BV(a.reg_bit);
     strncpy(str, "OFF\r\n", 6);
@@ -50,6 +53,7 @@ void *actuator_write(Actuator a, void *origstr) {
 }
 
 void *actuator_destroy(Actuator a) {
+  *a.port &= ~_BV(a.reg_bit); // force port off before switching this off
   *a.ddr &= ~_BV(a.reg_bit);
   return (void *) "PIN 22 is now cleared of any settings\r\n";
 }
