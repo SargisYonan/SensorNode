@@ -35,15 +35,19 @@ int main(void){
 
   Module devices[MAX_DEVICES];
   uint8_t devices_count = 0;
+  // TODO: resolver for TYPE_STRING to TYPE_NUM
   uint8_t type_cur_num = 0; // a number tracking the next device type to assign
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
   // temporary hardcode
-  devices[devices_count++] = new_actuator(type_cur_num++, &PORTA, &PINA, &DDRA,
+  // TODO: resolver for ID to new_DEVICE function
+  devices[devices_count++] = new_actuator(type_cur_num, &PORTA, &PINA, &DDRA,
       PA0);
+  // official method for incrementing type_cur_num
+  // This is because you don't know if a device of this type exists yet
+  if (devices[0].type_num == type_cur_num) type_cur_num++;
   uart_puts(devices[0].init(devices[0]));
-  //
 
   while (1) {
     // this way, it will point to the NULL character at the end
@@ -56,6 +60,18 @@ int main(void){
     }
     cmd_index += bytes_read;
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
+      if (cmd[0] == 'r' || cmd[0] == 'g' || cmd[0] == 'b') {
+        // Must destroy this device before we get rid of it
+        uart_puts((unsigned char *) devices[0].destroy(devices[0]));
+        // type_num will still be 0 since that was the type_num of the first
+        // actuator to be created
+        // R = PA0, G = PA1, B = PA2
+        devices[0] = new_actuator(type_cur_num, &PORTA, &PINA, &DDRA,
+            cmd[0] == 'r' ? PA0 : cmd[0] == 'g' ? PA1 : PA2);
+        devices[0].init(devices[0]);
+        cmd_index = 0;
+        continue;
+      }
       if (strncmp((char *) cmd, "destroy", 7) == 0) {
         uart_puts((unsigned char *) devices[0].destroy(devices[0]));
         cmd_index = 0;
@@ -72,12 +88,6 @@ int main(void){
       //uart_putc('\n');
       cmd_index = 0; // restart the index to start a new command
     }
-    /*
-    unsigned char data = uart_getc();
-    if (data == '\0') continue; // no data;
-    uart_putc(data);
-    if (data == '\r') uart_putc('\n');
-    */
   }
   return 0;
 }

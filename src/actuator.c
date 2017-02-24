@@ -32,7 +32,7 @@ Actuator new_actuator(uint8_t cur_type_num, volatile uint8_t *port,
 // currently a hardcoded solution
 void *actuator_init(Actuator a) {
   *a.ddr |= _BV(a.reg_bit); // pin 22
-  return (void *) "Set PIN 22 (PORTA0) to be an output for an actuator\r\n";
+  return (void *) "Set to be an output for an actuator\r\n";
 }
 
 void *actuator_write(Actuator a, void *origstr) {
@@ -55,5 +55,5 @@ void *actuator_write(Actuator a, void *origstr) {
 void *actuator_destroy(Actuator a) {
   *a.port &= ~_BV(a.reg_bit); // force port off before switching this off
   *a.ddr &= ~_BV(a.reg_bit);
-  return (void *) "PIN 22 is now cleared of any settings\r\n";
+  return (void *) "Cleared of any settings\r\n";
 }
