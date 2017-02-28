@@ -18,6 +18,7 @@ Actuator new_actuator(uint8_t cur_type_num, volatile uint8_t *port,
     actuator_type_num = cur_type_num;
   }
   a.type_num = actuator_type_num;
+  a.type_string = ACTUATOR_IDENTIFIER_STRING;
   a.index = actuator_count++;
   a.port = port;
   a.pin = pin;

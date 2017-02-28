@@ -19,34 +19,65 @@
 #include "module.h"
 #include "actuator.h"
 
-#define LED PB7
-#define LEDDDR DDRB
-#define LEDPORT PORTB
-
 #define MAX_DEVICES 100
 
 #define COMMAND_LONG (unsigned char *) \
   "COMMAND EXCEEDED TX_BUF_SIZE Characters\r\n"
 
+typedef Module (* NEW_DEVICE_FUNC_TYPE) (uint8_t, volatile uint8_t *,
+      volatile uint8_t *, volatile uint8_t *, uint8_t);
+
+Module devices[MAX_DEVICES]; // all devices currently running
+uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
+// type i points to a corresponding string
+const char *type_num_to_string_map[MAX_DEVICES];
+// type i points to a corresponding creation function
+NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES];
+uint8_t num_types = 0; // track the number of different types
+uint8_t device_next; // next index to create a device in
+uint8_t devices_count = 0;
+//TODO: this is obsolete, get it out of here
+uint8_t type_cur_num = 0; // a number tracking the next device type to assign
+
+// TODO: reolve name to ID (just do a linear search)
+
+// called initially for every type of module
+void add_to_resolvers(uint8_t type_num, char const *type_string,
+    NEW_DEVICE_FUNC_TYPE new_device) {
+  type_num_to_string_map[type_num] = type_string;
+  type_num_to_create_function_map[type_num] =
+    new_device;
+}
+
+// TODO: This should run through a parser to determine the on-board location
+// based on the command
+// currently hardcoded
+void create_device(uint8_t device, char *cmd) {
+  devices[device] = type_num_to_create_function_map[0] // type for actuator = 0
+    (0, &PORTA, &PINA, &DDRA, cmd[0] == 'r' ? PA0 : cmd[0] == 'g' ? PA1 : PA2);
+}
+
+// TODO: make the parser and the above function first
+void remove_device(uint8_t device) {
+  // compiler annoyance
+  device = 5;
+  device = device + 1;
+}
+
 int main(void){
+
+  // TODO: This part needs to be protected by a set of ifndef's per module
+  add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
+
   sei();
   
   uart_init();
 
-  Module devices[MAX_DEVICES];
-  uint8_t devices_count = 0;
-  // TODO: resolver for TYPE_STRING to TYPE_NUM
-  uint8_t type_cur_num = 0; // a number tracking the next device type to assign
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
   // temporary hardcode
-  // TODO: resolver for ID to new_DEVICE function
-  devices[devices_count++] = new_actuator(type_cur_num, &PORTA, &PINA, &DDRA,
-      PA0);
-  // official method for incrementing type_cur_num
-  // This is because you don't know if a device of this type exists yet
-  if (devices[0].type_num == type_cur_num) type_cur_num++;
+  create_device(devices_count++, (char *) "r"); // start with red
   uart_puts(devices[0].init(devices[0]));
 
   while (1) {
@@ -66,8 +97,7 @@ int main(void){
         // type_num will still be 0 since that was the type_num of the first
         // actuator to be created
         // R = PA0, G = PA1, B = PA2
-        devices[0] = new_actuator(type_cur_num, &PORTA, &PINA, &DDRA,
-            cmd[0] == 'r' ? PA0 : cmd[0] == 'g' ? PA1 : PA2);
+        create_device(0, (char *) cmd);
         devices[0].init(devices[0]);
         cmd_index = 0;
         continue;

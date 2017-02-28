@@ -10,6 +10,7 @@
 Module new_module() {
   Module m;
   m.type_num = DEFAULT_TYPE_NUM;
+  m.type_string = MODULE_IDENTIFIER_STRING;
   m.index = INDEX_INIT;
   m.port = NULL;
   m.pin = NULL;
