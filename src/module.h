@@ -14,6 +14,7 @@
 
 typedef struct Module {
   uint8_t type_num; // determined through runtime based on order of creation
+  // TODO: remove because strings for types will be in a mapper in main
   const char *type_string; // the string for the kind of device this is
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
   volatile uint8_t * port; // address of The port this device is associated with

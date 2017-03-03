@@ -25,7 +25,7 @@
   "COMMAND EXCEEDED TX_BUF_SIZE Characters\r\n"
 
 typedef Module (* NEW_DEVICE_FUNC_TYPE) (uint8_t, volatile uint8_t *,
-      volatile uint8_t *, volatile uint8_t *, uint8_t);
+    volatile uint8_t *, volatile uint8_t *, uint8_t);
 
 Module devices[MAX_DEVICES]; // all devices currently running
 uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
@@ -70,8 +70,32 @@ int main(void){
   add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
 
   sei();
-  
+
   uart_init();
+
+
+  // Hardcoded stuff to play with CAN trancievers
+
+  OCR0A = 1; // one cycle for timer
+
+  //ASSR |= _BV(OCIE0A); // set bit of async status register for following line
+  TIMSK0 |= _BV(OCIE0A); // set appropriate bit of timer interrupt register to enable compareA interrupt
+
+  TCCR0A |= _BV(COM0A0);
+  TCCR0A |= _BV(WGM00) | _BV(WGM01);
+  // timer prescaler to FREQ/1024 or ~16kHz increments
+  TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(WGM02);
+  DDRB |= _BV(PB7);
+  while(1) { // system loop
+    if (TIFR0 & _BV(OCF0A)) { // ~16 kHz
+
+      TIFR0 |= _BV(OCF0A); // clear timer interrupt flag (by setting)
+      TCNT0 = 0; // clear value stored in timer
+
+    }
+  }
+
+
 
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
