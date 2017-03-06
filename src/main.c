@@ -16,8 +16,10 @@
 #include "I2C_lib.h"
 #endif // LIGHT_SENSOR
 #include "uart.h"
+#include "parser.h"
 #include "module.h"
 #include "actuator.h"
+
 
 #define MAX_DEVICES 100
 
@@ -98,7 +100,15 @@ int main(void){
       continue;
     }
     cmd_index += bytes_read;
+
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
+      if(cmd[0] == 'm') {
+        // TODO: mapping function
+        uart_puts((unsigned char *) "Mapping function not yet ready\r\n");
+        cmd_index = 0; // this is necessary to clear the string
+        continue;
+      }
+
       if (cmd[0] == 'r' || cmd[0] == 'g' || cmd[0] == 'b') {
         // Must destroy this device before we get rid of it
         uart_puts((unsigned char *) devices[0].destroy(devices[0]));

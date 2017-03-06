@@ -1,26 +1,24 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
-void process_uart(void);
-void parse_command(void);
+#include <avr/io.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <util/delay.h>
+#include <avr/pgmspace.h>
+#include <stdio.h>
+#include <avr/interrupt.h>
 
-struct flags{
-    uint8_t uart_error:1;
-    uint8_t command_error:1;
-    uint8_t command_recieved:1;
-    uint8_t command_error_setpoint:1;
-    uint8_t set_setpoint:1;
-    uint8_t get_setpoint:1;
-    uint16_t var_setpoint;
-#ifdef DHT_SENSOR
-    uint8_t measure_temperature:1;
-    uint8_t measure_humidity:1;
-#endif /* DHT */
-#ifdef TEMP_SENSOR
-    uint8_t measure_temperature:1;
-#endif /* TEMP */
-#ifdef LIGHT_SENSOR
-    uint8_t measure_light:1;
-#endif /* LIGHT */
-} parser_flags;
+typedef struct Parser{
+  char cmd; // character for the cmd, ie: 'c', 'h', 'd', 'i', etc
+  uint8_t device_index; // index of the device array that we should access
+  // the below are only relevant when being given 'c' for a cmd
+  const char *type_str; // string for type ie: "ACTUATOR", etc
+  uint8_t port_address_index; // also index of address for pin and ddr
+  uint8_t reg_bit; // bit of the port that was requested
+} Parser;
+
+Parser parse_cmd(char *);
+
 #endif /* _PARSER_H_ */
