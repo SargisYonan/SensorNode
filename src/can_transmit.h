@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <avr/interrupt.h>
 
+#ifndef CAN_TRANSMIT_MAX 
+#define CAN_TRANSMIT_MAX 10
+#endif
+
 #define CAN_TRANSMIT_IDENTIFIER_STRING "CAN_TRANSMIT"
 
 typedef Module Can_Transmit 

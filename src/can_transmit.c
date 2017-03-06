@@ -12,51 +12,58 @@ uint8_t can_transmit_type_num = -1; // needs to be set on first creation of Can_
 // or a default module if too many can_transmits already exist
 Can_Transmit new_can_transmit(uint8_t cur_type_num, volatile uint8_t *port,
     volatile uint8_t *pin, volatile uint8_t *ddr, uint8_t reg_bit) {
-  Can_Transmit a = new_module();
-  if (can_transmit_count >= ACTUATOR_MAX) {
-    return a; // remember the key is that it has defaults set
+  Can_Transmit ct = new_module();
+  if (can_transmit_count >= CAN_TRANSMIT_MAX) {
+    return ct; // remember the key is that it has defaults set
   }
   if (can_transmit_count == 0) {
     can_transmit_type_num = cur_type_num;
   }
-  a.type_num = can_transmit_type_num;
-  a.type_string = CAN_TRANSMIT_IDENTIFIER_STRING;
-  a.index = can_transmit_count++;
-  a.port = port;
-  a.pin = pin;
-  a.ddr = ddr;
-  a.reg_bit = reg_bit;
-  a.init = &can_transmit_init;
-  a.write = &can_transmit_write;
-  a.destroy = &can_transmit_destroy;
-  return a;
+  ct.type_num = can_transmit_type_num;
+  ct.type_string = CAN_TRANSMIT_IDENTIFIER_STRING;
+  ct.index = can_transmit_count++;
+  ct.port = port;
+  ct.pin = pin;
+  ct.ddr = ddr;
+  ct.reg_bit = reg_bit;
+  ct.init = &can_transmit_init;
+  ct.write = &can_transmit_write;
+  ct.destroy = &can_transmit_destroy;
+  return ct;
 }
 
 // currently a hardcoded solution
 void *can_transmit_init(Can_Transmit a) {
-  *a.ddr |= _BV(a.reg_bit); // pin 22
-  return (void *) "Set to be an output for an can_transmit\r\n";
+
+  // Hardcoded stuff to play with CAN trancievers
+
+  OCR0A = 1; // one cycle for timer
+
+  //ASSR |= _BV(OCIE0A); // set bit of async status register for following line
+  TIMSK0 |= _BV(OCIE0A); // set appropriate bit of timer interrupt register to enable compareA interrupt
+
+  TCCR0A |= _BV(COM0A0);
+  TCCR0A |= _BV(WGM00) | _BV(WGM01);
+  // timer prescaler to FREQ/1024 or ~16kHz increments
+  TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(WGM02);
+  DDRB |= _BV(PB7);
+  while(1) { // system loop
+    if (TIFR0 & _BV(OCF0A)) { // ~16 kHz
+
+      TIFR0 |= _BV(OCF0A); // clear timer interrupt flag (by setting)
+      TCNT0 = 0; // clear value stored in timer
+
+    }
+  }
+
+
+  return (void *) "";
 }
 
 void *can_transmit_write(Can_Transmit a, void *origstr) {
-  char *str = (char *) origstr;
-  if (!(*a.ddr & _BV(a.reg_bit))) {
-    return "Cannot write to can_transmit: DDR set to input\r\n";
-  }
-  if (str[0] == '0') {
-    *a.port &= ~_BV(a.reg_bit);
-    strncpy(str, "OFF\r\n", 6);
-  } else if (str[0] == '1') {
-    *a.port |= _BV(a.reg_bit);
-    strncpy(str, "ON\r\n", 5);
-  } else {
-    strncpy(str, "INVALID\r\n", 10);
-  }
   return origstr;
 }
 
 void *can_transmit_destroy(Can_Transmit a) {
-  *a.port &= ~_BV(a.reg_bit); // force port off before switching this off
-  *a.ddr &= ~_BV(a.reg_bit);
-  return (void *) "Cleared of any settings\r\n";
+  return (void *) "";
 }
