@@ -99,3 +99,14 @@ unsigned char uart_rxpeak (void) {
   if (RXhead == RXtail) return '\0';
   return RXbuf[RXhead];
 }
+
+// feels good to be able to use printf directly
+void uart_printf (char *fmt, ...) {
+  unsigned char buffer[TX_BUF_SIZE];
+  va_list args;
+  va_start(args, fmt); // start var arg list
+  // basically sprintf but args is variadic
+  vsprintf((char *) buffer, fmt, args);
+  va_end(args); // end var arg list
+  uart_puts(buffer);
+}
