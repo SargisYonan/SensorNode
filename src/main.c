@@ -36,10 +36,18 @@ NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES];
 uint8_t num_types = 0; // track the number of different types
 uint8_t device_next; // next index to create a device in
 uint8_t devices_count = 0;
-//TODO: this is obsolete, get it out of here
-uint8_t type_cur_num = 0; // a number tracking the next device type to assign
 
-// TODO: reolve name to ID (just do a linear search)
+// resolve type string to num (just do a linear search)
+// return -1 if name not found
+uint8_t resolve_type_string_to_num(char *target) {
+  for (uint8_t i = 0; i < num_types; i++) {
+    if (strlen(target) == strlen((char *) type_num_to_string_map[i]) &&
+        strcmp(target, (char *) type_num_to_string_map[i]) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 // called initially for every type of module
 void add_to_resolvers(uint8_t type_num, char const *type_string,
@@ -72,30 +80,6 @@ int main(void){
   sei();
 
   uart_init();
-
-
-  // Hardcoded stuff to play with CAN trancievers
-
-  OCR0A = 1; // one cycle for timer
-
-  //ASSR |= _BV(OCIE0A); // set bit of async status register for following line
-  TIMSK0 |= _BV(OCIE0A); // set appropriate bit of timer interrupt register to enable compareA interrupt
-
-  TCCR0A |= _BV(COM0A0);
-  TCCR0A |= _BV(WGM00) | _BV(WGM01);
-  // timer prescaler to FREQ/1024 or ~16kHz increments
-  TCCR0B |= _BV(CS02) | _BV(CS00) | _BV(WGM02);
-  DDRB |= _BV(PB7);
-  while(1) { // system loop
-    if (TIFR0 & _BV(OCF0A)) { // ~16 kHz
-
-      TIFR0 |= _BV(OCF0A); // clear timer interrupt flag (by setting)
-      TCNT0 = 0; // clear value stored in timer
-
-    }
-  }
-
-
 
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
