@@ -11,11 +11,11 @@
 #include <avr/interrupt.h>
 
 typedef struct Parser{
-  char cmd; // character for the cmd, ie: 'c', 'h', 'd', 'i', etc
+  char cmd; // character for the cmd, ie: 'c', 'm', 'd', 'i', 'r', 'w', 'k'
   uint8_t device_index; // index of the device array that we should access
+  const char *ret_str; // ie: cmd = 'c': type_str, cmd = 'w': write_str
   // the below are only relevant when being given 'c' for a cmd
-  const char *type_str; // string for type ie: "ACTUATOR", etc
-  uint8_t port_address_index; // also index of address for pin and ddr
+  uint8_t address_index; // index of address for port, pin, and ddr
   uint8_t reg_bit; // bit of the port that was requested
 } Parser;
 
