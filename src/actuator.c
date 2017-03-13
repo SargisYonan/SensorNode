@@ -8,14 +8,14 @@ uint8_t actuator_type_num = -1; // needs to be set on first creation of Actuator
 // RETURNS:
 // the actuator with fields sest appropriately
 // or a default module if too many actuators already exist
-Actuator new_actuator(uint8_t cur_type_num, volatile uint8_t *port,
+Actuator new_actuator(uint8_t type_num, volatile uint8_t *port,
     volatile uint8_t *pin, volatile uint8_t *ddr, uint8_t reg_bit) {
   Actuator a = new_module();
   if (actuator_count >= ACTUATOR_MAX) {
     return a; // remember the key is that it has defaults set
   }
   if (actuator_count == 0) {
-    actuator_type_num = cur_type_num;
+    actuator_type_num = type_num;
   }
   a.type_num = actuator_type_num;
   a.type_str = ACTUATOR_IDENTIFIER_STRING;

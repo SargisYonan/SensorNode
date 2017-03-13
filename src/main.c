@@ -6,15 +6,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <avr/interrupt.h>
-#ifdef DHT_SENSOR
-#include "dht.h"
-#endif // DHT_SENSOR
-#ifdef TEMP_SENSOR
 #include "OneWire.h"
-#endif // TEMP_SENSOR
-#ifdef LIGHT_SENSOR
-#include "I2C_lib.h"
-#endif // LIGHT_SENSOR
 #include "uart.h"
 #include "parser.h"
 #include "module.h"
@@ -63,8 +55,13 @@ void add_to_resolvers(uint8_t type_num, char const *type_string,
 // based on the command
 // currently hardcoded
 void create_device(uint8_t device, char *cmd) {
+  /*
   devices[device] = type_num_to_create_function_map[0] // type for actuator = 0
     (0, &PORTA, &PINA, &DDRA, cmd[0] == 'r' ? PA0 : cmd[0] == 'g' ? PA1 : PA2);
+    */
+  devices[device] = type_num_to_create_function_map[1] // type for temp sensor
+    (1, &PORTC, &PINC, &DDRC,
+     cmd[0] ? PC0 : PC0); // the first argument is index of type array
 }
 
 // TODO: make the parser and the above function first
@@ -78,6 +75,8 @@ int main(void){
 
   // TODO: This part needs to be protected by a set of ifndef's per module
   add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
+  add_to_resolvers(num_types++, TEMP_SENSOR_IDENTIFIER_STRING,
+      &new_temp_sensor);
 
   sei();
 
@@ -93,7 +92,7 @@ int main(void){
   while (1) {
     // this way, it will point to the NULL character at the end
     // as well as not count it as a written index
-    uint16_t bytes_read = uart_ngetc(cmd, cmd_index, TX_BUF_SIZE, TX_BUF_SIZE);
+    uint16_t bytes_read = uart_ngetc(cmd, cmd_index, RX_BUF_SIZE, RX_BUF_SIZE);
     if (bytes_read == (uint16_t) -1) {
       uart_puts(COMMAND_LONG);
       cmd_index = 0;
@@ -102,13 +101,13 @@ int main(void){
     cmd_index += bytes_read;
 
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
-      if(cmd[0] == 'm') {
+      if(cmd[0] == 'm') { // TODO: parser stuff here
         // TODO: mapping function
         uart_puts((unsigned char *) "Mapping function not yet ready\r\n");
         cmd_index = 0; // this is necessary to clear the string
         continue;
       }
-
+/*
       if (cmd[0] == 'r' || cmd[0] == 'g' || cmd[0] == 'b') {
         // Must destroy this device before we get rid of it
         uart_puts((unsigned char *) devices[0].destroy(devices[0]));
@@ -120,6 +119,7 @@ int main(void){
         cmd_index = 0;
         continue;
       }
+      */
       if (strncmp((char *) cmd, "destroy", 7) == 0) {
         uart_puts((unsigned char *) devices[0].destroy(devices[0]));
         cmd_index = 0;
@@ -132,7 +132,7 @@ int main(void){
         continue;
       }
 
-      uart_puts((unsigned char *) devices[0].write(devices[0], (void *) cmd));
+      uart_puts((unsigned char *) devices[0].read(devices[0]));
       //uart_putc('\n');
       cmd_index = 0; // restart the index to start a new command
     }

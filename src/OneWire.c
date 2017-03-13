@@ -456,14 +456,14 @@ uint8_t temp_sensor_type_num = -1; // needs to be set on first creation of Temp_
 // RETURNS:
 // the temp_sensor with fields sest appropriately
 // or a default module if too many temp_sensors already exist
-Temp_Sensor new_temp_sensor(uint8_t cur_type_num, volatile uint8_t *port,
+Temp_Sensor new_temp_sensor(uint8_t type_num, volatile uint8_t *port,
     volatile uint8_t *pin, volatile uint8_t *ddr, uint8_t reg_bit) {
   Temp_Sensor t = new_module();
   if (temp_sensor_count >= TEMP_SENSOR_MAX) {
     return t; // remember the key is that it has defaults set
   }
   if (temp_sensor_count == 0) {
-    temp_sensor_type_num = cur_type_num;
+    temp_sensor_type_num = type_num;
   }
   t.type_num = temp_sensor_type_num;
   t.type_str = TEMP_SENSOR_IDENTIFIER_STRING;
