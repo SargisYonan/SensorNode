@@ -25,17 +25,30 @@ Module new_module() {
 }
 
 void *module_init(Module m) {
-  return NULL;
+  char out_str[128];
+  sprintf(out_str, "Initialized type: %s\r\n", m.type_str);
+  const char *ret_str = (const char *) out_str;
+  return (void *) ret_str;
 }
 
 void *module_read(Module m) {
-  return NULL;
+  char out_str[128];
+  sprintf(out_str, "Read type: %s\r\n", m.type_str);
+  const char *ret_str = (const char *) out_str;
+  return (void *) ret_str;
 }
 
 void *module_write(Module m, void *write_data) {
-  return (void *) write_data;
+  char out_str[256];
+  sprintf(out_str, "Write to type: %s\r\nWith %s\r\n", m.type_str,
+      (char *)write_data);
+  const char *ret_str = (const char *) out_str;
+  return (void *) ret_str;
 }
 
 void *module_destroy(Module m) {
-  return NULL;
+  char out_str[128];
+  sprintf(out_str, "Destroyed type: %s\r\n", m.type_str);
+  const char *ret_str = (const char *) out_str;
+  return (void *) ret_str;
 }

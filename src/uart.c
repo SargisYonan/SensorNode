@@ -17,7 +17,8 @@ ISR(USART0_RX_vect) {
     data = UDR0; // throw away data if buffer full
     return;
   }
-  RXbuf[RXtail] = UDR0;
+  data = UDR0; // compiler please be quiet
+  RXbuf[RXtail] = data;
   RXtail = (RXtail + 1) % RX_BUF_SIZE;
 }
 
@@ -47,6 +48,7 @@ void uart_init (void) {
 
   unsigned char data;
   while (UCSR0A & _BV(RXC0)) data = UDR0; // manual flush on startup
+  return (void) data; // just another way to make the compiler be quiet
 }
 
 // function to send data
