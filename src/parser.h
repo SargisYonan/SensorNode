@@ -17,6 +17,8 @@ typedef struct Parser{
   // the below are only relevant when being given 'c' for a cmd
   uint8_t address_index; // index of address for port, pin, and ddr
   uint8_t reg_bit; // bit of the port that was requested
+  // TODO: should we have an error flag? will it be useful to have diffent kinds
+  // of errors printing?
 } Parser;
 
 Parser parse_cmd(char *);
