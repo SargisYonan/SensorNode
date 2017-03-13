@@ -35,10 +35,10 @@
 
 // Pin defines
 
-#define DALLAS_PORT 	PORTC
-#define DALLAS_PORT_IN 	PINC
-#define DALLAS_DDR 		DDRC
-#define DALLAS_PIN 		0 			// pin 37 on mega2560
+//#define DALLAS_PORT 	PORTC
+//#define DALLAS_PORT_IN 	PINC
+//#define DALLAS_DDR 		DDRC
+//#define DALLAS_PIN 		0 			// pin 37 on mega2560
 
 // The number of devices on the bus.
 #define DALLAS_NUM_DEVICES 1
@@ -64,6 +64,27 @@
 
 #define DALLAS_TIME_COMMAND_REST 1  //let bus stabilize after each byte sent.
 
+
+// Sensor Node V3 Module stuff //
+
+#include "module.h"
+
+#ifndef TEMP_SENSOR_MAX
+#define TEMP_SENSOR_MAX 10
+#endif
+
+#define TEMP_SENSOR_IDENTIFIER_STRING "TEMP_SENSOR"
+
+typedef Module Temp_Sensor;
+
+Temp_Sensor new_temp_sensor(uint8_t, volatile uint8_t *, volatile uint8_t *,
+    volatile uint8_t *, uint8_t);
+
+void *temp_sensor_init(Temp_Sensor a);
+
+void *temp_sensor_read(Temp_Sensor a);
+
+
 // Structures //
 
 typedef struct {
@@ -86,65 +107,61 @@ typedef struct {
 
 // Functions //
 
-#ifdef ALLFUNCACCESS
-
 // Writes the LSB of the argument to the bus.
-void dallas_write(uint8_t);
+void dallas_write(Temp_Sensor, uint8_t);
 
 // Write a byte to the bus.
-void dallas_write_byte(uint8_t);
+void dallas_write_byte(Temp_Sensor, uint8_t);
 
 // Write the specified number of bytes to the bus from the supplied buffer.
-void dallas_write_buffer(uint8_t * buffer, uint8_t buffer_length);
+void dallas_write_buffer(Temp_Sensor, uint8_t * buffer, uint8_t buffer_length);
 
 // Read a bit from the bus and returns it as the LSB.
-uint8_t dallas_read(void);
+uint8_t dallas_read(Temp_Sensor);
 
 // Reads a byte from the bus.
-uint8_t dallas_read_byte(void);
+uint8_t dallas_read_byte(Temp_Sensor);
 
 // Reads the specified number of bytes from the bus into the supplied buffer.
-void dallas_read_buffer(uint8_t * buffer, uint8_t buffer_length);
+void dallas_read_buffer(Temp_Sensor, uint8_t * buffer, uint8_t buffer_length);
 
 // Resets the bus. Returns...
 // 1 - if a device or devices indicate presence
 // 0 - otherwise
-uint8_t dallas_reset(void);
+uint8_t dallas_reset(Temp_Sensor);
 
 // Powers the bus from the AVR (max 40 mA).
-void dallas_drive_bus(void);
+void dallas_drive_bus(Temp_Sensor);
 
 // Sends a MATCH ROM command to the specified device. Automatically resets the
 // bus.
-void dallas_match_rom(DALLAS_IDENTIFIER_t *);
+void dallas_match_rom(Temp_Sensor, DALLAS_IDENTIFIER_t *);
 
 // Sends a SKIP ROM command. Automatically resets the bus.
-void dallas_skip_rom(void);
+void dallas_skip_rom(Temp_Sensor);
 
 // Populates the identifier list. Returns...
 // 0 - if devices were found and there was no error
 // 1 - if there was a bus error
 // 2 - if there were more devices than specified by DALLAS_NUM_DEVICES
-uint8_t dallas_search_identifiers(void);
+uint8_t dallas_search_identifiers(Temp_Sensor t);
 
 // Returns the list of identifiers.
 DALLAS_IDENTIFIER_LIST_t * get_identifier_list(void);
 
-uint8_t dallas_command(uint8_t command, uint8_t with_reset);
+uint8_t dallas_command(Temp_Sensor, uint8_t command, uint8_t with_reset);
 
 
 //Converts Dallas two byte temperature into real like structure
 DALLAS_TEMPERATURE getDallasTemp(uint8_t msb, uint8_t lsb);
 
 //search bus for slaves
-void search_bus();
+void search_bus(Temp_Sensor);
 
 // converts a dallas temperature type to float for the avr
 float DTtof(DALLAS_TEMPERATURE dt);
 
-#endif //ALLFUNCACCESS
-
 //returns temperature in celsius
-float getTemperatureC(void);
+float getTemperatureC(Temp_Sensor);
 
 #endif
