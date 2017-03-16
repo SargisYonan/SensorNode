@@ -86,7 +86,8 @@ void remove_device(uint8_t device) {
 
 int main(void){
 
-  // TODO: This part needs to be protected by a set of ifndef's per module
+  // TODO: perhaps make the function handle the incrementation and global
+  // access of num_types?
   add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
   add_to_resolvers(num_types++, TEMP_SENSOR_IDENTIFIER_STRING,
       &new_temp_sensor);
@@ -99,6 +100,12 @@ int main(void){
   uint16_t cmd_index = 0;
 
   // temporary hardcode
+  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
+      0, 0); // PA0 = pin22
+  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
+      0, 1); // PA1 = pin23
+  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
+      0, 2); // PA2 = pin24
   create_device(resolve_type_string_to_num(TEMP_SENSOR_IDENTIFIER_STRING),
       2, 0); // PC0 = pin37
   //uart_puts(devices[0].init(devices[0])); // disconnected right now
