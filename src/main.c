@@ -11,7 +11,7 @@
 #include "parser.h"
 #include "module.h"
 #include "actuator.h"
-
+#include "common.h"
 
 #define MAX_DEVICES 100
 
