@@ -14,12 +14,12 @@
 
 typedef struct Module {
   uint8_t type_num; // determined through runtime based on order of creation
-  // TODO: remove because strings for types will be in a mapper in main
+  // Needs something to print in case of default function being called
   const char *type_str; // the string for the kind of device this is
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
-  volatile uint8_t * port; // address of The port this device is associated with
-  volatile uint8_t * pin; // address of The pin this device is associated with
-  volatile uint8_t * ddr; // address of The data direction register the device
+  volatile uint8_t *port; // address of The port this device is associated with
+  volatile uint8_t *pin; // address of The pin this device is associated with
+  volatile uint8_t *ddr; // address of The data direction register the device
                 // is associated with
   uint8_t reg_bit; // bit of the above three registers to index into
   void *(*init)(struct Module); // init function
