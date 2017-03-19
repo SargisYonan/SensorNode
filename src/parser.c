@@ -33,12 +33,13 @@ Parser parse_cmd(char *input_str) {
         p.cmd = '\0';
         return p;
       }
-      if (!isupper(token[1]) || !isdigit(token[2])) { // not following "PXN"
+      if (token[1] < 'A' || token[1] > 'H' ||
+          token[2] < '0' || token[2] > '7') { // not following "PXN"
         p.cmd = '\0';
         return p;
       }
-      p.address_index = (uint8_t) token[1] - 'A'; // 'A'-'H' : 0-7
-      p.reg_bit = (uint8_t) token[1] - '0'; // '0'-'7' : 0-7
+      p.address_index = ((uint8_t) token[1]) - ((uint8_t) 'A'); // 'A'-'H' : 0-7
+      p.reg_bit = ((uint8_t) token[2]) - ((uint8_t) '0'); // '0'-'7' : 0-7
       break;
     case CHAR_INIT:
       if (!isdigit(token[1])) { // this isn't a number (but it should be)
