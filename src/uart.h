@@ -32,4 +32,6 @@ uint16_t uart_ngetc(unsigned char *, uint16_t, uint16_t, uint16_t);
 
 void uart_printf(char *, ...);
 
+void uart_flushTX(void);
+
 #endif //_UART_H_

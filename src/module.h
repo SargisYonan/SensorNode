@@ -17,11 +17,11 @@ typedef struct Module {
   // Needs something to print in case of default function being called
   const char *type_str; // the string for the kind of device this is
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
-  volatile uint8_t *port; // address of The port this device is associated with
-  volatile uint8_t *pin; // address of The pin this device is associated with
-  volatile uint8_t *ddr; // address of The data direction register the device
-                // is associated with
-  uint8_t reg_bit; // bit of the above three registers to index into
+  volatile uint8_t *port[8]; // address of The port this device associates with
+  volatile uint8_t *pin[8]; // address of The pin this device is associated with
+  volatile uint8_t *ddr[8]; // address of The data direction register associated
+  uint8_t reg_bit[8]; // bit of the above three registers to index into
+  uint8_t pin_count; // number of pins assigned. You can use (0 : pin_count - 1)
   void *(*init)(struct Module); // init function
   void *(*read)(struct Module); // read function
   void *(*write)(struct Module, void *); // write function

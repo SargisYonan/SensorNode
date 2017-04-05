@@ -18,8 +18,7 @@
 #define COMMAND_LONG (unsigned char *) \
   "COMMAND EXCEEDED TX_BUF_SIZE Characters\r\n"
 
-typedef Module (* NEW_DEVICE_FUNC_TYPE) (uint8_t, volatile uint8_t *,
-    volatile uint8_t *, volatile uint8_t *, uint8_t);
+typedef Module (* NEW_DEVICE_FUNC_TYPE) (uint8_t, Module);
 
 Module devices[MAX_DEVICES]; // all devices currently running
 uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
@@ -42,7 +41,7 @@ uint8_t devices_count = 0;
 
 // resolve type string to num (just do a linear search)
 // return -1 if name not found
-uint8_t resolve_type_string_to_num(char *target) {
+int8_t resolve_type_string_to_num(char *target) {
   for (uint8_t i = 0; i < num_types; i++) {
     if (strlen(target) == strlen((char *) type_num_to_string_map[i]) &&
         strcmp(target, (char *) type_num_to_string_map[i]) == 0) {
@@ -58,27 +57,43 @@ void add_to_resolvers(uint8_t type_num, char const *type_string,
   type_num_to_string_map[type_num] = type_string;
   type_num_to_create_function_map[type_num] =
     new_device;
+  uart_printf("initializing the string for type %d as %s\r\n", type_num,
+      (char *) type_num_to_string_map[type_num]);
 }
 
 // create a device on the next available spot in the array
 // create by setting valid bit to 1, calling appropriate create function
 //  and increasing the devices_count.
 // also call init
-void create_device(uint8_t type_num, uint8_t pin_map_index,
-    uint8_t reg_bit) {
+void create_device(uint8_t type_num, const uint8_t *pin_map_index,
+    const uint8_t *reg_bit, uint8_t pin_count) {
   if (devices_count == MAX_DEVICES) return;
-  for (uint8_t i = 0; 1; i++) { // if the above is false, there is no condition here
+  Module m = new_module();
+  m.pin_count = pin_count;
+  for (uint8_t i = 0; i < pin_count; i++) { // note that pin_count will be at most 8
+    uart_printf("Kill me: %d\r\np_m_ind=%d, reg_bit=%d\r\n", i,
+        pin_map_index[i], reg_bit[i]);
+    uart_flushTX();
+    m.port[i] = port_map[pin_map_index[i]];
+    m.pin[i] = pin_map[pin_map_index[i]];
+    m.ddr[i] = ddr_map[pin_map_index[i]];
+    m.reg_bit[i] = reg_bit[i];
+  }
+  for (uint8_t i = 0; 1; i++) {
+    if (i == MAX_DEVICES) {
+      uart_printf(
+          "How did you manage to iterate to the end of the device array?\r\n");
+      break;
+    }
     if (devices_valid[i] == 0) {
       devices[i] =
-        type_num_to_create_function_map[type_num](type_num,
-            port_map[pin_map_index], pin_map[pin_map_index],
-            ddr_map[pin_map_index], reg_bit);
+        type_num_to_create_function_map[type_num](type_num, m);
       devices_valid[i] = 1;
-      uart_printf("Created new device of type %s on index %d with %s%d%s%d\r\n",
-          (char *) type_num_to_string_map[type_num], i,
-          "a pin_map_index of ", pin_map_index,
-          " and a reg_bit of ", reg_bit);
+      uart_printf("Created new device of type %s on index %d with %d pins\r\n",
+          (char *) type_num_to_string_map[type_num], i, pin_count);
+      //uart_flushTX();
       uart_printf(devices[i].init(devices[i]));
+      //uart_flushTX();
       devices_count++;
       break;
     }
@@ -97,19 +112,18 @@ void remove_device(uint8_t device_index) {
 
 int main(void){
 
-  for (int i = 0; i < MAX_DEVICES; i++)
-    devices_valid[i] = 0; // initialize to 0
-
-  // TODO: perhaps make the function handle the incrementation and global
-  // access of num_types?
-  add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
-  add_to_resolvers(num_types++, TEMP_SENSOR_IDENTIFIER_STRING,
-      &new_temp_sensor);
-
   sei();
 
   uart_init();
 
+  for (int i = 0; i < MAX_DEVICES; i++)
+    devices_valid[i] = 0; // initialize to 0
+
+  // TODO: based off #defines of whether these exist in the first place
+  add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
+  //uart_printf("GOD, IF YOU EXIST, PLZ HELP: %s\r\n", (char *) type_num_to_string_map[0]);
+  //add_to_resolvers(num_types++, TEMP_SENSOR_IDENTIFIER_STRING,
+  //    &new_temp_sensor);
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
@@ -141,14 +155,14 @@ int main(void){
       Parser p = parse_cmd((char *) cmd);
       //uart_printf("CMD: %c, ret_str: %s\r\n", p.cmd, p.ret_str); // debug
       switch(p.cmd) { // This assumes the string has been parsed
-        case CHAR_CREATE: // TODO: multi pin per module functionality
+        case CHAR_CREATE:
           {
-            int type = resolve_type_string_to_num((char *) p.ret_str);
+            int8_t type = resolve_type_string_to_num((char *) p.ret_str);
             if (type == -1) {
               uart_printf("%s: Invalid Type String\r\n", p.ret_str);
               break;
             }
-            create_device(type, p.address_index, p.reg_bit);
+            create_device(type, p.address_index, p.reg_bit, p.pin_count);
           }
           break;
         case CHAR_INIT:
@@ -201,6 +215,12 @@ int main(void){
                 i, type_num_to_string_map[devices[i].type_num],
                 devices[i].index, "TODO");
             count--;
+          }
+          uart_printf("\r\n");
+          uart_printf("There are %d different types of devices available\r\n",
+              num_types);
+          for (uint8_t i = 0; i < num_types; i++) {
+            uart_printf("%d: %s\r\n", i, (char *) type_num_to_string_map[i]);
           }
           uart_printf("\r\n");
           break;

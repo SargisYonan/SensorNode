@@ -112,3 +112,13 @@ void uart_printf (char *fmt, ...) {
   va_end(args); // end var arg list
   uart_puts(buffer);
 }
+
+// block untill the TXbuffer has been written
+void uart_flushTX() {
+  UCSR0B &= ~_BV(UDRE0); // we will finish TX, turn off interrupt
+  while (TXhead != TXtail) {
+    while(!(UCSR0A & _BV(UDRE0))) {}
+    UDR0 = TXbuf[TXhead];
+    TXhead = (TXhead + 1) % TX_BUF_SIZE;
+  }
+}

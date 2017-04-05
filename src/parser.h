@@ -15,8 +15,10 @@ typedef struct Parser{
   uint8_t device_index; // index of the device array that we should access
   const char *ret_str; // ie: cmd = 'c': type_str, cmd = 'w': write_str
   // the below are only relevant when being given 'c' for a cmd
-  uint8_t address_index; // index of address for port, pin, and ddr
-  uint8_t reg_bit; // bit of the port that was requested
+  const uint8_t *address_index; // array of indices for addresses of
+                                // port, pin, and ddr requested
+  const uint8_t *reg_bit; // array of bits of the ports that were requested
+  uint8_t pin_count; // number of pins assigned
   // TODO: should we have an error flag? will it be useful to have diffent kinds
   // of errors printing?
 } Parser;

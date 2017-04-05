@@ -12,10 +12,7 @@ Module new_module() {
   m.type_num = DEFAULT_TYPE_NUM;
   m.type_str = MODULE_IDENTIFIER_STRING;
   m.index = INDEX_INIT;
-  m.port = NULL;
-  m.pin = NULL;
-  m.ddr = NULL;
-  m.reg_bit = INDEX_INIT;
+  m.pin_count = 0;
   m.init = &module_init;
   m.read = &module_read;
   m.write = &module_write;
@@ -40,7 +37,7 @@ void *module_read(Module m) {
 
 void *module_write(Module m, void *write_data) {
   char out_str[256];
-  sprintf(out_str, "Write to type: %s\r\nWith %s\r\n", m.type_str,
+  sprintf(out_str, "Write to type: %s\r\nWith data: %s\r\n", m.type_str,
       (char *)write_data);
   const char *ret_str = (const char *) out_str;
   return (void *) ret_str;
