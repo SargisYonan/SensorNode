@@ -16,7 +16,6 @@ Actuator new_actuator(uint8_t type_num, Actuator a) {
     actuator_type_num = type_num;
   }
   a.type_num = actuator_type_num;
-  a.type_str = ACTUATOR_IDENTIFIER_STRING;
   a.index = actuator_count++;
   a.init = &actuator_init;
   a.write = &actuator_write;

@@ -15,7 +15,6 @@
 typedef struct Module {
   uint8_t type_num; // determined through runtime based on order of creation
   // Needs something to print in case of default function being called
-  const char *type_str; // the string for the kind of device this is
   uint8_t index; // order of module of type(type_num) to be created (start at 0)
   volatile uint8_t *port[8]; // address of The port this device associates with
   volatile uint8_t *pin[8]; // address of The pin this device is associated with

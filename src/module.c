@@ -10,7 +10,6 @@
 Module new_module() {
   Module m;
   m.type_num = DEFAULT_TYPE_NUM;
-  m.type_str = MODULE_IDENTIFIER_STRING;
   m.index = INDEX_INIT;
   m.pin_count = 0;
   m.init = &module_init;
@@ -23,21 +22,21 @@ Module new_module() {
 
 void *module_init(Module m) {
   char out_str[128];
-  sprintf(out_str, "Initialized type: %s\r\n", m.type_str);
+  sprintf(out_str, "Initialized type: %d\r\n", m.type_num);
   const char *ret_str = (const char *) out_str;
   return (void *) ret_str;
 }
 
 void *module_read(Module m) {
   char out_str[128];
-  sprintf(out_str, "Read type: %s\r\n", m.type_str);
+  sprintf(out_str, "Read type: %d\r\n", m.type_num);
   const char *ret_str = (const char *) out_str;
   return (void *) ret_str;
 }
 
 void *module_write(Module m, void *write_data) {
   char out_str[256];
-  sprintf(out_str, "Write to type: %s\r\nWith data: %s\r\n", m.type_str,
+  sprintf(out_str, "Write to type: %d\r\nWith data: %s\r\n", m.type_num,
       (char *)write_data);
   const char *ret_str = (const char *) out_str;
   return (void *) ret_str;
@@ -45,7 +44,7 @@ void *module_write(Module m, void *write_data) {
 
 void *module_destroy(Module m) {
   char out_str[128];
-  sprintf(out_str, "Destroyed type: %s\r\n", m.type_str);
+  sprintf(out_str, "Destroyed type: %d\r\n", m.type_num);
   const char *ret_str = (const char *) out_str;
   return (void *) ret_str;
 }
