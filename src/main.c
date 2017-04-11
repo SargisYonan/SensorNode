@@ -22,10 +22,32 @@ typedef Module (* NEW_DEVICE_FUNC_TYPE) (uint8_t, Module);
 
 Module devices[MAX_DEVICES]; // all devices currently running
 uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
+
+#ifdef ACTUATOR_H_
+  static const char actuator_str[] PROGMEM = ACTUATOR_IDENTIFIER_STRING;
+#endif
+#ifdef ONEWIRE_H
+  //static const char temp_sens_str[] PROGMEM = TEMP_SENSOR_IDENTIFIER_STRING;
+#endif
+
 // type i points to a corresponding string
-const char *type_num_to_string_map[MAX_DEVICES];
+static PGM_P type_num_to_string_map[MAX_DEVICES] = {
+#ifdef ACTUATOR_H_
+  actuator_str,
+#endif
+#ifdef ONEWIRE_H
+  //temp_sens_str,
+#endif
+};
 // type i points to a corresponding creation function
-NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES];
+static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
+#ifdef ACTUATOR_H_
+  &new_actuator,
+#endif
+#ifdef ONEWIRE_H
+//  &new_temp_sensor,
+#endif
+};
 // port map
 volatile uint8_t *port_map[8] = {&PORTA, &PORTB, &PORTC, &PORTD, &PORTE, &PORTF,
   &PORTG, &PORTH};
@@ -43,22 +65,12 @@ uint8_t devices_count = 0;
 // return -1 if name not found
 int8_t resolve_type_string_to_num(char *target) {
   for (uint8_t i = 0; i < num_types; i++) {
-    if (strlen(target) == strlen((char *) type_num_to_string_map[i]) &&
-        strcmp(target, (char *) type_num_to_string_map[i]) == 0) {
+    if (strlen(target) == strlen_P(type_num_to_string_map[i]) &&
+        strcmp_P(target, type_num_to_string_map[i]) == 0) {
       return i;
     }
   }
   return -1;
-}
-
-// called initially for every type of module
-void add_to_resolvers(uint8_t type_num, char const *type_string,
-    NEW_DEVICE_FUNC_TYPE new_device) {
-  type_num_to_string_map[type_num] = type_string;
-  type_num_to_create_function_map[type_num] =
-    new_device;
-  uart_printf("initializing the string for type %d as %s\r\n", type_num,
-      (char *) type_num_to_string_map[type_num]);
 }
 
 // create a device on the next available spot in the array
@@ -71,29 +83,21 @@ void create_device(uint8_t type_num, const uint8_t *pin_map_index,
   Module m = new_module();
   m.pin_count = pin_count;
   for (uint8_t i = 0; i < pin_count; i++) { // note that pin_count will be at most 8
-    uart_printf("Kill me: %d\r\np_m_ind=%d, reg_bit=%d\r\n", i,
-        pin_map_index[i], reg_bit[i]);
-    uart_flushTX();
     m.port[i] = port_map[pin_map_index[i]];
     m.pin[i] = pin_map[pin_map_index[i]];
     m.ddr[i] = ddr_map[pin_map_index[i]];
     m.reg_bit[i] = reg_bit[i];
   }
   for (uint8_t i = 0; 1; i++) {
-    if (i == MAX_DEVICES) {
-      uart_printf(
-          "How did you manage to iterate to the end of the device array?\r\n");
-      break;
-    }
     if (devices_valid[i] == 0) {
       devices[i] =
         type_num_to_create_function_map[type_num](type_num, m);
       devices_valid[i] = 1;
-      uart_printf("Created new device of type %s on index %d with %d pins\r\n",
-          (char *) type_num_to_string_map[type_num], i, pin_count);
-      char buf[128];
-      strcpy_P(buf, (PGM_P) pgm_read_word(devices[i].init(devices[i])));
-      uart_printf(buf);
+      uart_printf("Created new device of type ");
+      uart_puts_P(type_num_to_string_map[type_num]);
+      uart_printf(" on index %d with %d pins\r\n",
+          i, pin_count);
+      devices[i].init(devices[i]);
       devices_count++;
       break;
     }
@@ -104,10 +108,7 @@ void create_device(uint8_t type_num, const uint8_t *pin_map_index,
 // also decrease device count
 void remove_device(uint8_t device_index) {
   if (device_index >= MAX_DEVICES) return;
-  char buf[128];
-  strcpy_P(buf, (PGM_P) pgm_read_word(devices[device_index].
-        destroy(devices[device_index])));
-  uart_printf(buf);
+  devices[device_index].destroy(devices[device_index]);
   uart_printf("Removed device %d\r\n", device_index);
   devices_valid[device_index] = 0;
   devices_count--;
@@ -122,11 +123,9 @@ int main(void){
   for (int i = 0; i < MAX_DEVICES; i++)
     devices_valid[i] = 0; // initialize to 0
 
-  // TODO: based off #defines of whether these exist in the first place
-  add_to_resolvers(num_types++, ACTUATOR_IDENTIFIER_STRING, &new_actuator);
-  //uart_printf("GOD, IF YOU EXIST, PLZ HELP: %s\r\n", (char *) type_num_to_string_map[0]);
-  //add_to_resolvers(num_types++, TEMP_SENSOR_IDENTIFIER_STRING,
-  //    &new_temp_sensor);
+  // initialize num_types to number of types
+  for (num_types = 0; type_num_to_string_map[num_types] != NULL; num_types++);
+  
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
@@ -156,7 +155,6 @@ int main(void){
 
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
       Parser p = parse_cmd((char *) cmd);
-      char buf[128];
       //uart_printf("CMD: %c, ret_str: %s\r\n", p.cmd, p.ret_str); // debug
       switch(p.cmd) { // This assumes the string has been parsed
         case CHAR_CREATE:
@@ -175,9 +173,7 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
-                init(devices[p.device_index])));
-          uart_printf(buf);
+          devices[p.device_index].init(devices[p.device_index]);
           break;
         case CHAR_READ:
           if (p.device_index >= MAX_DEVICES ||
@@ -185,9 +181,7 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
-                read(devices[p.device_index])));
-          uart_printf(buf);
+          devices[p.device_index].read(devices[p.device_index]);
           break;
         case CHAR_WRITE:
           if (p.device_index >= MAX_DEVICES ||
@@ -195,9 +189,8 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
-                write(devices[p.device_index], (char *) p.ret_str)));
-          uart_printf(buf);
+          devices[p.device_index].write(devices[p.device_index],
+              (char *) p.ret_str);
           break;
         case CHAR_DESTROY:
           if (p.device_index >= MAX_DEVICES ||
@@ -205,9 +198,7 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
-                destroy(devices[p.device_index])));
-          uart_printf(buf);
+          devices[p.device_index].destroy(devices[p.device_index]);
           break;
         case CHAR_KILL:
           if (p.device_index >= MAX_DEVICES ||
@@ -222,16 +213,19 @@ int main(void){
           uint8_t count = devices_count;
           for (uint8_t i = 0; count > 0; i++) {
             if (devices_valid[i] == 0) continue;
-            uart_printf("\tdevice %d: type=%s, type_count=%d, pin=%s\r\n",
-                i, type_num_to_string_map[devices[i].type_num],
-                devices[i].index, "TODO");
+            uart_printf("\tdevice %d: type=", i);
+            uart_puts_P(type_num_to_string_map[devices[i].type_num]);
+            uart_printf(" pin_count=%d\r\n",
+                devices[i].pin_count);
             count--;
           }
           uart_printf("\r\n");
           uart_printf("There are %d different types of devices available\r\n",
               num_types);
           for (uint8_t i = 0; i < num_types; i++) {
-            uart_printf("%d: %s\r\n", i, (char *) type_num_to_string_map[i]);
+            uart_printf("%d: ", i);
+            uart_puts_P(type_num_to_string_map[i]);
+            uart_printf("\r\n");
           }
           uart_printf("\r\n");
           break;

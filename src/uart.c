@@ -64,6 +64,15 @@ void uart_puts (unsigned char *str) {
   for (int i = 0; i < (int) strlen((char *) str); i++) uart_putc(str[i]);
 }
 
+// put a string from program memory
+void uart_puts_P (PGM_P str) {
+  for (int i = 0;; i++) {
+    char c = pgm_read_byte(str + i);
+    if (c == '\0') break;
+    uart_putc(c);
+  }
+}
+
 unsigned char uart_getc (void) {
   if (RXhead == RXtail) return '\0'; // no new data
   unsigned char data = RXbuf[RXhead];

@@ -1,7 +1,11 @@
 #include "actuator.h"
 
-uint8_t actuator_count = 0;
-uint8_t actuator_type_num = -1; // needs to be set on first creation of Actuator
+#include <avr/pgmspace.h>
+
+#include "uart.h"
+
+static uint8_t actuator_count = 0;
+static uint8_t actuator_type_num = -1; // needs to be set on first creation of Actuator
 
 // sets an index of the actuator module array to be the new actuator's info
 // also sets the fields accordingly
@@ -16,25 +20,28 @@ Actuator new_actuator(uint8_t type_num, Actuator a) {
     actuator_type_num = type_num;
   }
   a.type_num = actuator_type_num;
-  a.index = actuator_count++;
   a.init = &actuator_init;
   a.write = &actuator_write;
   a.destroy = &actuator_destroy;
+  actuator_count++;
   return a;
 }
 
 // currently a hardcoded solution
-PGM_P actuator_init(Actuator a) {
-  if (a.pin_count != 1)
-    return PSTR(
-        "Actuator not initialized due to having more or less than 1 pin\r\n");
+void actuator_init(Actuator a) {
+  if (a.pin_count != 1) {
+    uart_puts_P(PSTR(
+          "Actuator not initialized due to having more or less than 1 pin\r\n"));
+    return;
+  }
   *a.ddr[0] |= _BV(a.reg_bit[0]);
-  return PSTR("Actuator initialized\r\n");
+  uart_puts_P(PSTR("Actuator initialized\r\n"));
 }
 
-PGM_P actuator_write(Actuator a, char *str) {
+void actuator_write(Actuator a, char *str) {
   if (!(*a.ddr[0] & _BV(a.reg_bit[0]))) {
-    return PSTR("Cannot write to actuator: DDR set to input\r\n");
+    uart_puts_P(PSTR("Cannot write to actuator: DDR set to input\r\n"));
+    return;
   }
   if (str[0] == '0') {
     *a.port[0] &= ~_BV(a.reg_bit[0]);
@@ -45,15 +52,16 @@ PGM_P actuator_write(Actuator a, char *str) {
   } else {
     strncpy(str, "INVALID\r\n", 10);
   }
-  PGM_P ret_str = str;
-  return ret_str;
+  uart_printf(str);
 }
 
-PGM_P actuator_destroy(Actuator a) {
-  if (a.pin_count != 1)
-    return PSTR(
-        "Actuator not destroyed due to having more or less than 1 pin\r\n");
+void actuator_destroy(Actuator a) {
+  if (a.pin_count != 1) {
+    uart_puts_P(PSTR(
+          "Actuator not destroyed due to having more or less than 1 pin\r\n"));
+    return;
+  }
   *a.port[0] &= ~_BV(a.reg_bit[0]); // force port off before switching this off
   *a.ddr[0] &= ~_BV(a.reg_bit[0]);
-  return PSTR("Cleared of any settings\r\n");
+  uart_puts_P(PSTR("Cleared of any settings\r\n"));
 }

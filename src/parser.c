@@ -62,7 +62,11 @@ Parser parse_cmd(char *input_str) {
           return p;
         }
         p.pin_count++;
-        while (p.pin_count < 8 && ((token = strtok(NULL, delimit)) != NULL)) {
+        while (((token = strtok(NULL, delimit)) != NULL)) {
+          if (p.pin_count == 8) { //don't try to have more than 8 pins
+            p.cmd = '\0';
+            break;
+          }
           if (!parse_pin(token, add_ind,
                 reg_bit, p.pin_count)) break;
           p.pin_count++;

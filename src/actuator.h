@@ -14,10 +14,10 @@ typedef Module Actuator;
 
 Actuator new_actuator(uint8_t, Actuator);
 
-PGM_P actuator_init(Actuator a);
+void actuator_init(Actuator a);
 
-PGM_P actuator_write(Actuator a, char *);
+void actuator_write(Actuator a, char *);
 
-PGM_P actuator_destroy(Actuator a);
+void actuator_destroy(Actuator a);
 
 #endif
