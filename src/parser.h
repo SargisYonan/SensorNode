@@ -13,6 +13,7 @@
 typedef struct Parser{
   char cmd; // character for the cmd, ie: 'c', 'm', 'd', 'i', 'r', 'w', 'k'
   uint8_t device_index; // index of the device array that we should access
+  // TODO: use PROGMEM for the three following fields
   const char *ret_str; // ie: cmd = 'c': type_str, cmd = 'w': write_str
   // the below are only relevant when being given 'c' for a cmd
   const uint8_t *address_index; // array of indices for addresses of

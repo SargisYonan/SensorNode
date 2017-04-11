@@ -24,17 +24,17 @@ Actuator new_actuator(uint8_t type_num, Actuator a) {
 }
 
 // currently a hardcoded solution
-void *actuator_init(Actuator a) {
+PGM_P actuator_init(Actuator a) {
   if (a.pin_count != 1)
-    return "Actuator not initialized due to having more or less than 1 pin\r\n";
-  *a.ddr[0] |= _BV(a.reg_bit[0]); // pin 22
-  return "Actuator initialized\r\n";
+    return PSTR(
+        "Actuator not initialized due to having more or less than 1 pin\r\n");
+  *a.ddr[0] |= _BV(a.reg_bit[0]);
+  return PSTR("Actuator initialized\r\n");
 }
 
-void *actuator_write(Actuator a, void *origstr) {
-  char *str = (char *) origstr;
+PGM_P actuator_write(Actuator a, char *str) {
   if (!(*a.ddr[0] & _BV(a.reg_bit[0]))) {
-    return "Cannot write to actuator: DDR set to input\r\n";
+    return PSTR("Cannot write to actuator: DDR set to input\r\n");
   }
   if (str[0] == '0') {
     *a.port[0] &= ~_BV(a.reg_bit[0]);
@@ -45,13 +45,15 @@ void *actuator_write(Actuator a, void *origstr) {
   } else {
     strncpy(str, "INVALID\r\n", 10);
   }
-  return origstr;
+  PGM_P ret_str = str;
+  return ret_str;
 }
 
-void *actuator_destroy(Actuator a) {
+PGM_P actuator_destroy(Actuator a) {
   if (a.pin_count != 1)
-    return "Actuator not destroyed due to having more or less than 1 pin\r\n";
+    return PSTR(
+        "Actuator not destroyed due to having more or less than 1 pin\r\n");
   *a.port[0] &= ~_BV(a.reg_bit[0]); // force port off before switching this off
   *a.ddr[0] &= ~_BV(a.reg_bit[0]);
-  return (void *) "Cleared of any settings\r\n";
+  return PSTR("Cleared of any settings\r\n");
 }

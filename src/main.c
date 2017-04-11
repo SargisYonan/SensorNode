@@ -91,9 +91,9 @@ void create_device(uint8_t type_num, const uint8_t *pin_map_index,
       devices_valid[i] = 1;
       uart_printf("Created new device of type %s on index %d with %d pins\r\n",
           (char *) type_num_to_string_map[type_num], i, pin_count);
-      //uart_flushTX();
-      uart_printf(devices[i].init(devices[i]));
-      //uart_flushTX();
+      char buf[128];
+      strcpy_P(buf, (PGM_P) pgm_read_word(devices[i].init(devices[i])));
+      uart_printf(buf);
       devices_count++;
       break;
     }
@@ -104,7 +104,10 @@ void create_device(uint8_t type_num, const uint8_t *pin_map_index,
 // also decrease device count
 void remove_device(uint8_t device_index) {
   if (device_index >= MAX_DEVICES) return;
-  uart_printf(devices[device_index].destroy(devices[device_index]));
+  char buf[128];
+  strcpy_P(buf, (PGM_P) pgm_read_word(devices[device_index].
+        destroy(devices[device_index])));
+  uart_printf(buf);
   uart_printf("Removed device %d\r\n", device_index);
   devices_valid[device_index] = 0;
   devices_count--;
@@ -153,6 +156,7 @@ int main(void){
 
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
       Parser p = parse_cmd((char *) cmd);
+      char buf[128];
       //uart_printf("CMD: %c, ret_str: %s\r\n", p.cmd, p.ret_str); // debug
       switch(p.cmd) { // This assumes the string has been parsed
         case CHAR_CREATE:
@@ -171,7 +175,9 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          uart_puts(devices[p.device_index].init(devices[p.device_index]));
+          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
+                init(devices[p.device_index])));
+          uart_printf(buf);
           break;
         case CHAR_READ:
           if (p.device_index >= MAX_DEVICES ||
@@ -179,7 +185,9 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          uart_puts(devices[p.device_index].read(devices[p.device_index]));
+          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
+                read(devices[p.device_index])));
+          uart_printf(buf);
           break;
         case CHAR_WRITE:
           if (p.device_index >= MAX_DEVICES ||
@@ -187,8 +195,9 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          uart_puts(devices[p.device_index].write(devices[p.device_index],
-                (void *) p.ret_str));
+          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
+                write(devices[p.device_index], (char *) p.ret_str)));
+          uart_printf(buf);
           break;
         case CHAR_DESTROY:
           if (p.device_index >= MAX_DEVICES ||
@@ -196,7 +205,9 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          uart_puts(devices[p.device_index].destroy(devices[p.device_index]));
+          strcpy_P(buf, (PGM_P) pgm_read_word(devices[p.device_index].
+                destroy(devices[p.device_index])));
+          uart_printf(buf);
           break;
         case CHAR_KILL:
           if (p.device_index >= MAX_DEVICES ||

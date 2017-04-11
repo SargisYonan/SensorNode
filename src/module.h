@@ -21,17 +21,17 @@ typedef struct Module {
   volatile uint8_t *ddr[8]; // address of The data direction register associated
   uint8_t reg_bit[8]; // bit of the above three registers to index into
   uint8_t pin_count; // number of pins assigned. You can use (0 : pin_count - 1)
-  void *(*init)(struct Module); // init function
-  void *(*read)(struct Module); // read function
-  void *(*write)(struct Module, void *); // write function
-  void *(*destroy)(struct Module); // destroy function
+  PGM_P (*init)(struct Module); // init function
+  PGM_P (*read)(struct Module); // read function
+  PGM_P (*write)(struct Module, char *); // write function
+  PGM_P (*destroy)(struct Module); // destroy function
 } Module;
 
 Module new_module(void); // all modules are created with this function
 
-void *module_init(Module); // default init function
-void *module_read(Module); // default read function
-void *module_write(Module, void *); // default write function
-void *module_destroy(Module); // default destroy function
+PGM_P module_init(Module); // default init function
+PGM_P module_read(Module); // default read function
+PGM_P module_write(Module, char *); // default write function
+PGM_P module_destroy(Module); // default destroy function
 
 #endif
