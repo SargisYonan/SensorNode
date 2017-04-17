@@ -77,12 +77,11 @@
 
 typedef Module Temp_Sensor;
 
-Temp_Sensor new_temp_sensor(uint8_t, volatile uint8_t *, volatile uint8_t *,
-    volatile uint8_t *, uint8_t);
+Temp_Sensor new_temp_sensor(uint8_t, Temp_Sensor);
 
-void *temp_sensor_init(Temp_Sensor a);
+void temp_sensor_init(Temp_Sensor a);
 
-void *temp_sensor_read(Temp_Sensor a);
+void temp_sensor_read(Temp_Sensor a);
 
 
 // Structures //

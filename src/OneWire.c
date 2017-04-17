@@ -11,6 +11,9 @@
 
 #include "OneWire.h"
 
+#include <avr/pgmspace.h>
+
+#include "uart.h"
 
 DALLAS_IDENTIFIER_LIST_t identifier_list;
 
@@ -31,16 +34,16 @@ void dallas_write(Temp_Sensor t, uint8_t bit) {
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 		{
 			// Configure the pin as an output.
-			*t.ddr |= _BV(t.reg_bit);
+			*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 			// Pull the bus low.
-			*t.port &= ~_BV(t.reg_bit);
+			*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 			// Wait the required time.
 			_delay_us(DALLAS_TIME_ZERO);
 
 			// Release the bus.
-      *t.port |= _BV(t.reg_bit);
+      *t.port[0] |= _BV(t.reg_bit[0]);
 
 			// Let the rest of the time slot expire.
 			_delay_us(DALLAS_TIME_FRAME - DALLAS_TIME_ZERO);
@@ -49,16 +52,16 @@ void dallas_write(Temp_Sensor t, uint8_t bit) {
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 		{
 			// Configure the pin as an output.
-			*t.ddr |= _BV(t.reg_bit);
+			*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 			// Pull the bus low.
-			*t.port &= ~_BV(t.reg_bit);
+			*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 			// Wait the required time.
 			_delay_us(DALLAS_TIME_ONE);
 
 			// Release the bus.
-      *t.port |= _BV(t.reg_bit);
+      *t.port[0] |= _BV(t.reg_bit[0]);
 
 			// Let the rest of the time slot expire.
 			_delay_us(DALLAS_TIME_FRAME - DALLAS_TIME_ZERO);
@@ -72,21 +75,21 @@ uint8_t dallas_read(Temp_Sensor t) {
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 	{
 		// Configure the pin as an output.
-		*t.ddr |= _BV(t.reg_bit);
+		*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 		// Pull the bus low.
-		*t.port &= ~_BV(t.reg_bit);
+		*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait the required time.
 		_delay_us(2);
 
 		// Configure as input.
-    *t.ddr &= ~_BV(t.reg_bit);
+    *t.ddr[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait for a bit.
 		_delay_us(11);
 
-		if ((*t.pin & _BV(t.reg_bit)) == 0x00) {
+		if ((*t.pin[0] & _BV(t.reg_bit[0])) == 0x00) {
 			reply = 0x00;
 		} else {
 			reply = 0x01;
@@ -110,20 +113,20 @@ uint8_t dallas_reset(Temp_Sensor t) {
 	{
 
 		// Configure the pin as an output.
-		*t.ddr |= _BV(t.reg_bit);
+		*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 		// Pull the bus low.
-		*t.port &= ~_BV(t.reg_bit);
+		*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait the required time.
 		_delay_us(DALLAS_TIME_RESET); // 500 uS
 
 		// Switch to an input, enable the pin change interrupt, and wait.
-		*t.ddr &= ~_BV(t.reg_bit);
+		*t.ddr[0] &= ~_BV(t.reg_bit[0]);
 
 		_delay_us(DALLAS_TIME_PRESENCE);
 
-		if ((*t.pin & _BV(t.reg_bit)) == 0x00) {
+		if ((*t.pin[0] & _BV(t.reg_bit[0])) == 0x00) {
 			reply = 0x01;
 		}
 
@@ -163,10 +166,10 @@ uint8_t dallas_read_byte(Temp_Sensor t) {
 // Uses the uC to power the bus.
 void dallas_drive_bus(Temp_Sensor t) {
 	// Configure the pin as an output.
-	*t.ddr |= _BV(t.reg_bit);
+	*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 	// Set the bus high.
-	*t.port |= _BV(t.reg_bit);
+	*t.port[0] |= _BV(t.reg_bit[0]);
 }
 
 void dallas_match_rom(Temp_Sensor t, DALLAS_IDENTIFIER_t * identifier) {
@@ -456,9 +459,7 @@ uint8_t temp_sensor_type_num = -1; // needs to be set on first creation of Temp_
 // RETURNS:
 // the temp_sensor with fields sest appropriately
 // or a default module if too many temp_sensors already exist
-Temp_Sensor new_temp_sensor(uint8_t type_num, volatile uint8_t *port,
-    volatile uint8_t *pin, volatile uint8_t *ddr, uint8_t reg_bit) {
-  Temp_Sensor t = new_module();
+Temp_Sensor new_temp_sensor(uint8_t type_num, Temp_Sensor t) {
   if (temp_sensor_count >= TEMP_SENSOR_MAX) {
     return t; // remember the key is that it has defaults set
   }
@@ -466,25 +467,16 @@ Temp_Sensor new_temp_sensor(uint8_t type_num, volatile uint8_t *port,
     temp_sensor_type_num = type_num;
   }
   t.type_num = temp_sensor_type_num;
-  t.type_str = TEMP_SENSOR_IDENTIFIER_STRING;
-  t.index = temp_sensor_count++;
-  t.port = port;
-  t.pin = pin;
-  t.ddr = ddr;
-  t.reg_bit = reg_bit; // pin 37 = PC0
   t.init = &temp_sensor_init;
   t.read = &temp_sensor_read;
   return t;
 }
 
-void *temp_sensor_init(Temp_Sensor t) {
+void temp_sensor_init(Temp_Sensor t) {
   getTemperatureC(t);
-  return (void *) "Released temp_sensor garbage data\r\n";
+  uart_puts_P(PSTR("Released temp_sensor garbage data\r\n"));
 }
 
-void *temp_sensor_read(Temp_Sensor t) {
-  char out_str[128];
-  sprintf(out_str, "Temperature = %f\r\n", getTemperatureC(t));
-  const char *ret_str = (const char *) out_str;
-  return (void *) ret_str;
+void temp_sensor_read(Temp_Sensor t) {
+  uart_printf("Temperature = %f\r\n", getTemperatureC(t));
 }

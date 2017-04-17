@@ -27,7 +27,7 @@ uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
   static const char actuator_str[] PROGMEM = ACTUATOR_IDENTIFIER_STRING;
 #endif
 #ifdef ONEWIRE_H
-  //static const char temp_sens_str[] PROGMEM = TEMP_SENSOR_IDENTIFIER_STRING;
+  static const char temp_sens_str[] PROGMEM = TEMP_SENSOR_IDENTIFIER_STRING;
 #endif
 
 // type i points to a corresponding string
@@ -36,7 +36,7 @@ static PGM_P type_num_to_string_map[MAX_DEVICES] = {
   actuator_str,
 #endif
 #ifdef ONEWIRE_H
-  //temp_sens_str,
+  temp_sens_str,
 #endif
 };
 // type i points to a corresponding creation function
@@ -45,7 +45,7 @@ static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
   &new_actuator,
 #endif
 #ifdef ONEWIRE_H
-//  &new_temp_sensor,
+  &new_temp_sensor,
 #endif
 };
 // port map
@@ -210,6 +210,7 @@ int main(void){
           break;
         case CHAR_MAP:
           uart_printf("There are %d devices installed:\r\n", devices_count);
+          uart_flushTX();
           uint8_t count = devices_count;
           for (uint8_t i = 0; count > 0; i++) {
             if (devices_valid[i] == 0) continue;
@@ -217,15 +218,18 @@ int main(void){
             uart_puts_P(type_num_to_string_map[devices[i].type_num]);
             uart_printf(" pin_count=%d\r\n",
                 devices[i].pin_count);
+            uart_flushTX();
             count--;
           }
           uart_printf("\r\n");
           uart_printf("There are %d different types of devices available\r\n",
               num_types);
+          uart_flushTX();
           for (uint8_t i = 0; i < num_types; i++) {
             uart_printf("%d: ", i);
             uart_puts_P(type_num_to_string_map[i]);
             uart_printf("\r\n");
+            uart_flushTX();
           }
           uart_printf("\r\n");
           break;
