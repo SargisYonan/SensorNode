@@ -9,7 +9,7 @@ TARGET=main
 OBJCOPY=avr-objcopy
 RM=rm -f
 F_CPU=16000000UL
-CDEFS=-DF_CPU=$(F_CPU)
+CDEFS=-DF_CPU=$(F_CPU) -DUSING_UART1
 # TODO: is this being used anymore?
 ifdef NORADIO
 	CDEFS+=-DNORADIO
