@@ -40,7 +40,7 @@ LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
-MODULES = main parser uart module actuator OneWire
+MODULES = main parser uart module actuator OneWire fona
 OBJECTS = $(MODULES:%=%.o)
 
 ######## OS Detection #########
