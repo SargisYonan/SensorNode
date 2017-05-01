@@ -5,8 +5,8 @@
 #include <string.h>
 #include "module.h"
 
-#ifndef FONA_MAX 
-#define FONA_MAX 10
+#ifndef FONA_MAX
+#define FONA_MAX 1
 #endif
 
 #define FONA_IDENTIFIER_STRING "FONA"
@@ -16,6 +16,8 @@ typedef Module Fona;
 Fona new_fona(uint8_t, Fona);
 
 void fona_init(Fona f);
+
+void fona_read(Fona f);
 
 void fona_write(Fona f, char *);
 

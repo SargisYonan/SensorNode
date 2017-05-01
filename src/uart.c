@@ -2,7 +2,8 @@
 
 #define BAUDRATE 19200U
 #define BAUD_PRESCALE (((F_CPU / (BAUDRATE * 16UL))) - 1)
-#define FREQ 16e6 // atmega2560 has a 16MHz crystal
+// TODO: What the hell is this calculation? Where did 16UL come from?
+#define calculate_prescale(FREQ, BAUD) ((FREQ / (BAUD * 16UL)) - 1)
 
 static unsigned char RXbuf[RX_BUF_SIZE]; // circular buffer
 static uint8_t RXhead, RXtail;
@@ -262,5 +263,7 @@ void uart1_flushTX() {
     TXhead1 = (TXhead1 + 1) % TX_BUF_SIZE;
   }
 }
+
+// TODO: uart1_destroy()
 
 #endif // USING_UART1
