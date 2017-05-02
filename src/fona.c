@@ -48,6 +48,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIPMODE=1\r\n")); // transparent mode on
   uart1_flushTX();
 
+  /* Forget checking valid responses for now
   // TODO: the following needs to go into a macro or function or something
   for (;;) {
     uint16_t bytes_read = uart1_ngetc(strbuf, strbuf_ptr, 5, RX_BUF_SIZE);
@@ -61,10 +62,13 @@ void fona_init(Fona f) {
   }
   // TODO: check that the string contains "OK"
   // TODO: end of macro stuff
+  */
 
   uart1_puts_P(PSTR("AT+CSTT=\"CMNET\"\r\n")); // start task and TODO: set APN
   // TODO: check for "OK"
-  uart1_puts_P(PSTR("AT+CIPSERVER=1,1234\r\n")); // start server on port 123
+  uart1_flushTX();
+  uart1_puts_P(PSTR("AT+CIPSERVER=1,1234\r\n")); // start server on port 1234
+  uart1_flushTX();
   // TODO: check for "OK"
   // TODO: check for "SERVER OK"
 
@@ -75,11 +79,16 @@ void fona_init(Fona f) {
 
 // TODO: read from appropriate UART. If setup correctly, will redirect from TCP
 void fona_read(Fona f) {
+  // TODO basically call uart1_gets (TODO) twice, saving the second string but
+  // also parsing out the leading "\r\n"
   uart_puts_P(PSTR("fona_read() not yet ready\r\n"));
 }
 
 // TODO: write to appropriate uart. if setup correctly, will forward to TCP
+// Specifically, the abstractions for sending the data directly should already
+// be handled at this point
 void fona_write(Fona f, char *str) {
+  // TODO: use uart1_puts() directly since transparent mode
   uart_puts_P(PSTR("fona_write() not yet ready\r\n"));
 }
 
@@ -91,7 +100,11 @@ void fona_destroy(Fona f) {
     return;
   }
   // TODO: destroy uart setup both on fona and on sensornode
-  // TODO: send "AT+CIPSERVER=0\r\n"
-  // TODO: send "AT+CIPCLOSE\r\n"
-  uart_puts_P(PSTR("Cleared of any settings\r\n"));
+
+  uart1_puts_P("AT+CIPSERVER=0\r\n"); // this just disconnects from the client
+  uart1_puts_P("AT+CIPCLOSE\r\n"); // this actually turns off the server
+  //TODO: command to turn off fona or as close to that as possible
+  //TODO: destroy uart1
+
+  uart_puts_P(PSTR("fona Cleared of any settings\r\n"));
 }
