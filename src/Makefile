@@ -24,7 +24,7 @@ CSTANDARD=-std=gnu99
 MCU=atmega2560
 
 
-CFLAGS=-Wall 
+CFLAGS=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wimplicit
 CFLAGS+=-Wstrict-prototypes
@@ -41,6 +41,7 @@ CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
 MODULES = main parser uart module actuator OneWire fona
+MODULES += twimaster humidity_sensor
 OBJECTS = $(MODULES:%=%.o)
 
 ######## OS Detection #########
