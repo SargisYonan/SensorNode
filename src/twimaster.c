@@ -4,12 +4,12 @@
 * File:     $Id: twimaster.c,v 1.4 2015/01/17 12:16:05 peter Exp $
 * Software: AVR-GCC 3.4.3 / avr-libc 1.2.3
 * Target:   any AVR device with hardware TWI 
-* Usage:    API compatible with I2C Software Library i2cmaster.h
+* Usage:    API compatible with I2C Software Library twimaster.h
 **************************************************************************/
 #include <inttypes.h>
 #include <compat/twi.h>
 
-#include "i2cmaster.h"
+#include "twimaster.h"
 
 
 /* define CPU frequency in hz here if not defined in Makefile */
