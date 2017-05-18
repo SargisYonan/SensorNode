@@ -3,13 +3,20 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
-#define AM2315_TWI_ADDRESS 0x5c // could be 0xB8 according to datasheet
-#define AM2315_TWI_ADDRESS_WRITE ((AM2315_TWI_ADDRESS << 1) | I2C_WRITE)
-#define AM2315_TWI_ADDRESS_READ ((AM2315_TWI_ADDRESS << 1) | I2C_READ)
-#define READREGCODE 0x03
-#define BEGINREG 0x00
-#define NUMREGTOREAD 4
-#define NUMBYTESTOSTORE 6
+#define TSL2561_FLOATING_TWI_ADDRESS 0x39 // could be 0xB8 according to datasheet
+#define TSL2561_REGISTER_ID 0x0A
+#define TSL2561_TWI_ADDRESS_WRITE ((TSL2561_FLOATING_TWI_ADDRESS << 1) | I2C_WRITE)
+#define TSL2561_TWI_ADDRESS_READ ((TSL2561_FLOATING_TWI_ADDRESS << 1) | I2C_READ)
+#define TSL2561_COMMAND_BIT 0x80
+#define TSL2561_REGISTER_CONTROL 0x00
+#define TSL2561_CONTROL_POWERON 0x03
+#define TSL2561_CONTROL_POWEROFF 0x00
+#define TSL2561_INTEGRATIONTIME_13MS 0x00    // 13.7ms
+#define TSL2561_INTEGRATIONTIME_101MS 0x01    // 101ms
+#define TSL2561_INTEGRATIONTIME_402MS 0x02     // 402ms
+#define TSL2561_INTEGRATION_TIME TSL2561_INTEGRATIONTIME_402MS // set
+                                        // integration tim to 402 ms
+#define TSL2561_GAIN 0x00 // 0x00 for no gain, 0x10 for 16x gain
 
 #include "uart.h"
 #include "twimaster.h"
@@ -37,44 +44,53 @@ Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor h) {
   return h;
 }
 
+// should be good
 void light_sensor_init(Light_Sensor h) {
   i2c_init();
 
   /* Make sure we're actually connected */
-  //uint8_t x = read8(TSL2561_REGISTER_ID); // TODO
+  i2c_start(TSL2561_TWI_ADDRESS_READ);
+  uint8_t x = i2c_read(0);
+  i2c_stop();
   if (!(x & 0x0A))
   {
-  //  return false; // TODO: error stuff
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
   }
-  // _tsl2561Initialised = true; // TODO: 
 
-  /* Set default integration time and gain */
-  // setIntegrationTime(_tsl2561IntegrationTime); // TODO
-  // setGain(_tsl2561Gain); // TODO
+  i2c_start(TSL2561_TWI_ADDRESS_WRITE);
 
-  /* Note: by default, the device is in power down mode on bootup */
-  //disable(); // TODO
+  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+      TSL2561_CONTROL_POWERON); // enable the light sensor
 
-  uart_puts_P(PSTR("Light_Sensor initialized\r\n"));
+  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
+      TSL2561_INTEGRATION_TIME | TSL2561_GAIN); // set the integration time and gain
+
+  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
+      TSL2561_CONTROL_POWERON); // disable the light sensor
+
+  i2c_stop();
+
+  uart_puts_P(PSTR("light sensor initialized\r\n"));
 }
 
 // FIXME should be light sensor
 // TODO: double check datasheet, could be faster (smaller delays)
 void light_sensor_read(Light_Sensor h) {
-  if (i2c_start(AM2315_TWI_ADDRESS_WRITE) != 0) {
+  if (i2c_start(TSL2561_TWI_ADDRESS_WRITE) != 0) {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
     return;
   }
   _delay_ms(2); // TODO: wait could be shorter?
   i2c_stop(); // should be woke now
-  i2c_start(AM2315_TWI_ADDRESS_WRITE); // tell it to generate the temp and hum
+  i2c_start(TSL2561_TWI_ADDRESS_WRITE); // tell it to generate the temp and hum
   i2c_write(READREGCODE);
   i2c_write(BEGINREG);
   i2c_write(NUMREGTOREAD);
   i2c_stop();
   _delay_ms(10); // TODO: wait could be shorter?
   uint8_t ret[NUMBYTESTOSTORE];
-  i2c_start(AM2315_TWI_ADDRESS_READ); // now read the data
+  i2c_start(TSL2561_TWI_ADDRESS_READ); // now read the data
   for (int i = 0; i < NUMBYTESTOSTORE - 1; i++) ret[i] = i2c_read(1);
   ret[NUMBYTESTOSTORE - 1] = i2c_read(0); // this reads and sends a CRC signal
   i2c_stop();
