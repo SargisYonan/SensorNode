@@ -3,26 +3,178 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
-#define TSL2561_FLOATING_TWI_ADDRESS 0x39 // could be 0xB8 according to datasheet
-#define TSL2561_REGISTER_ID 0x0A
-#define TSL2561_TWI_ADDRESS_WRITE ((TSL2561_FLOATING_TWI_ADDRESS << 1) | I2C_WRITE)
-#define TSL2561_TWI_ADDRESS_READ ((TSL2561_FLOATING_TWI_ADDRESS << 1) | I2C_READ)
-#define TSL2561_COMMAND_BIT 0x80
-#define TSL2561_REGISTER_CONTROL 0x00
-#define TSL2561_CONTROL_POWERON 0x03
-#define TSL2561_CONTROL_POWEROFF 0x00
-#define TSL2561_INTEGRATIONTIME_13MS 0x00    // 13.7ms
-#define TSL2561_INTEGRATIONTIME_101MS 0x01    // 101ms
-#define TSL2561_INTEGRATIONTIME_402MS 0x02     // 402ms
-#define TSL2561_INTEGRATION_TIME TSL2561_INTEGRATIONTIME_402MS // set
-                                        // integration tim to 402 ms
-#define TSL2561_GAIN 0x00 // 0x00 for no gain, 0x10 for 16x gain
+#define TSL2591_TWI_ADDRESS 0x29 // there is only one available address
+//#define TSL2591_TWI_ADDRESS_WRITE ((TSL2591_TWI_ADDRESS << 1) | I2C_WRITE)
+#define TSL2591_TWI_ADDRESS_WRITE ((TSL2591_TWI_ADDRESS) + I2C_WRITE)
+//#define TSL2591_TWI_ADDRESS_READ ((TSL2591_TWI_ADDRESS << 1) | I2C_READ)
+#define TSL2591_TWI_ADDRESS_READ ((TSL2591_TWI_ADDRESS) + I2C_READ)
+
+#define TSL2591_CHOSEN_GAIN TSL2591_GAIN_MED
+#define TSL2591_CHOSEN_INTEGRATION TSL2591_INTEGRATIONTIME_100MS
+
+// FROM ADAFRUIT TSL2591 LIBRARY //
+
+#define TSL2591_VISIBLE           (2)       // channel 0 - channel 1
+#define TSL2591_INFRARED          (1)       // channel 1
+#define TSL2591_FULLSPECTRUM      (0)       // channel 0
+
+#define TSL2591_READBIT           (0x01)
+
+#define TSL2591_COMMAND_BIT       (0xA0)    // 1010 0000: bits 7 and 5 for 'command normal'
+#define TSL2591_CLEAR_INT         (0xE7)
+#define TSL2591_TEST_INT          (0xE4)
+#define TSL2591_WORD_BIT          (0x20)    // 1 = read/write word (rather than byte)
+#define TSL2591_BLOCK_BIT         (0x10)    // 1 = using block read/write
+
+#define TSL2591_ENABLE_POWEROFF   (0x00)
+#define TSL2591_ENABLE_POWERON    (0x01)
+#define TSL2591_ENABLE_AEN        (0x02)    // ALS Enable. This field activates ALS function. Writing a one activates the ALS. Writing a zero disables the ALS.
+#define TSL2591_ENABLE_AIEN       (0x10)    // ALS Interrupt Enable. When asserted permits ALS interrupts to be generated, subject to the persist filter.
+#define TSL2591_ENABLE_NPIEN      (0x80)    // No Persist Interrupt Enable. When asserted NP Threshold conditions will generate an interrupt, bypassing the persist filter
+
+#define TSL2591_LUX_DF            (408)
+
+// Note that these three are 100 times what they should be to avoid floating
+// point calculations. Take care in your calculations to accomodate this
+#define TSL2591_LUX_COEFB         (164)  // CH0 coefficient
+#define TSL2591_LUX_COEFC         (59)  // CH1 coefficient A
+#define TSL2591_LUX_COEFD         (86)  // CH2 coefficient B
+
+// END ADAFRUIT LIBRARY CODE //
 
 #include "uart.h"
 #include "twimaster.h"
 
 static uint8_t light_sensor_count = 0;
 static uint8_t light_sensor_type_num = -1; // needs to be set on first creation of Light_Sensor
+
+// FROM ADAFRUIT TSL2591 LIBRARY //
+
+enum
+{
+  TSL2591_REGISTER_ENABLE             = 0x00,
+  TSL2591_REGISTER_CONTROL            = 0x01,
+  TSL2591_REGISTER_THRESHOLD_AILTL    = 0x04, // ALS low threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_AILTH    = 0x05, // ALS low threshold upper byte
+  TSL2591_REGISTER_THRESHOLD_AIHTL    = 0x06, // ALS high threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_AIHTH    = 0x07, // ALS high threshold upper byte
+  TSL2591_REGISTER_THRESHOLD_NPAILTL  = 0x08, // No Persist ALS low threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_NPAILTH  = 0x09, // etc
+  TSL2591_REGISTER_THRESHOLD_NPAIHTL  = 0x0A,
+  TSL2591_REGISTER_THRESHOLD_NPAIHTH  = 0x0B,
+  TSL2591_REGISTER_PERSIST_FILTER     = 0x0C,
+  TSL2591_REGISTER_PACKAGE_PID        = 0x11,
+  TSL2591_REGISTER_DEVICE_ID          = 0x12,
+  TSL2591_REGISTER_DEVICE_STATUS      = 0x13,
+  TSL2591_REGISTER_CHAN0_LOW          = 0x14,
+  TSL2591_REGISTER_CHAN0_HIGH         = 0x15,
+  TSL2591_REGISTER_CHAN1_LOW          = 0x16,
+  TSL2591_REGISTER_CHAN1_HIGH         = 0x17
+};
+
+typedef enum
+{
+  TSL2591_INTEGRATIONTIME_100MS     = 0x00,
+  TSL2591_INTEGRATIONTIME_200MS     = 0x01,
+  TSL2591_INTEGRATIONTIME_300MS     = 0x02,
+  TSL2591_INTEGRATIONTIME_400MS     = 0x03,
+  TSL2591_INTEGRATIONTIME_500MS     = 0x04,
+  TSL2591_INTEGRATIONTIME_600MS     = 0x05,
+}
+tsl2591IntegrationTime_t;
+
+typedef enum
+{
+  //  bit 7:4: 0
+  TSL2591_PERSIST_EVERY             = 0x00, // Every ALS cycle generates an interrupt
+  TSL2591_PERSIST_ANY               = 0x01, // Any value outside of threshold range
+  TSL2591_PERSIST_2                 = 0x02, // 2 consecutive values out of range
+  TSL2591_PERSIST_3                 = 0x03, // 3 consecutive values out of range
+  TSL2591_PERSIST_5                 = 0x04, // 5 consecutive values out of range
+  TSL2591_PERSIST_10                = 0x05, // 10 consecutive values out of range
+  TSL2591_PERSIST_15                = 0x06, // 15 consecutive values out of range
+  TSL2591_PERSIST_20                = 0x07, // 20 consecutive values out of range
+  TSL2591_PERSIST_25                = 0x08, // 25 consecutive values out of range
+  TSL2591_PERSIST_30                = 0x09, // 30 consecutive values out of range
+  TSL2591_PERSIST_35                = 0x0A, // 35 consecutive values out of range
+  TSL2591_PERSIST_40                = 0x0B, // 40 consecutive values out of range
+  TSL2591_PERSIST_45                = 0x0C, // 45 consecutive values out of range
+  TSL2591_PERSIST_50                = 0x0D, // 50 consecutive values out of range
+  TSL2591_PERSIST_55                = 0x0E, // 55 consecutive values out of range
+  TSL2591_PERSIST_60                = 0x0F, // 60 consecutive values out of range
+}
+tsl2591Persist_t;
+
+typedef enum
+{
+  TSL2591_GAIN_LOW                  = 0x00,    // low gain (1x)
+  TSL2591_GAIN_MED                  = 0x10,    // medium gain (25x)
+  TSL2591_GAIN_HIGH                 = 0x20,    // medium gain (428x)
+  TSL2591_GAIN_MAX                  = 0x30,    // max gain (9876x)
+}
+tsl2591Gain_t;
+
+// END ADAFRUIT LIBRARY CODE //
+
+// private function that attempts to read device id (checks if it is connected)
+// returns 1 if successful, 0 otherwise
+uint8_t TSL2591_check_connectivity(void) {
+
+  // request the data
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) return 0;
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_ID);
+  i2c_stop();
+
+  uart_puts_P(PSTR("Checking connectivity finished 1\r\n"));
+  // then read the data
+  if (i2c_start(TSL2591_TWI_ADDRESS_READ)) return 0;
+  uint8_t id = i2c_read(0);
+  i2c_stop();
+
+  uart_puts_P(PSTR("Checking connectivity finished 2\r\n"));
+  return (id == 0x50 ? 1 : 0); // id should be returned as 0x50 normally
+}
+
+// private function that enables the light sensor
+// returns 1 if successful, 0 otherwise
+uint8_t TSL2591_enable(void) {
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) return 0;
+
+  // enable device and ambient light sensor
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_ENABLE);
+  i2c_write(TSL2591_ENABLE_POWERON | TSL2591_ENABLE_AEN);
+
+  i2c_stop();
+  return 1;
+}
+
+// private function that disables the light sensor
+// returns 1 if successful, 0 otherwise
+uint8_t TSL2591_disable(void) {
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) return 0;
+
+  // disable device
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_ENABLE);
+  i2c_write(TSL2591_ENABLE_POWEROFF);
+
+  i2c_stop();
+  return 1;
+}
+
+// private function that sets the gain and integration time of the sensor
+void TSL2591_set_gain_integration(uint8_t gain, uint8_t integration) {
+  TSL2591_enable();
+
+  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+
+  // set the gain and integration time of the device
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CONTROL);
+  i2c_write(gain | integration);
+
+  i2c_stop();
+
+  TSL2591_disable();
+}
 
 // sets an index of the light_sensor module array to be the new light_sensor's info
 // also sets the fields accordingly
@@ -48,68 +200,106 @@ Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor h) {
 void light_sensor_init(Light_Sensor h) {
   i2c_init();
 
-  /* Make sure we're actually connected */
-  i2c_start(TSL2561_TWI_ADDRESS_READ);
-  uint8_t x = i2c_read(0);
-  i2c_stop();
-  if (!(x & 0x0A))
+  // Make sure we're actually connected and operating as expected
+  if (!TSL2591_check_connectivity())
   {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
     return;
   }
 
-  i2c_start(TSL2561_TWI_ADDRESS_WRITE);
-
-  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-      TSL2561_CONTROL_POWERON); // enable the light sensor
-
-  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_TIMING,
-      TSL2561_INTEGRATION_TIME | TSL2561_GAIN); // set the integration time and gain
-
-  i2c_write(TSL2561_COMMAND_BIT | TSL2561_REGISTER_CONTROL,
-      TSL2561_CONTROL_POWERON); // disable the light sensor
-
-  i2c_stop();
+  // set to default values by adafruit library (note this also disables device)
+  TSL2591_set_gain_integration(
+      TSL2591_CHOSEN_GAIN, TSL2591_CHOSEN_INTEGRATION);
 
   uart_puts_P(PSTR("light sensor initialized\r\n"));
 }
 
-// FIXME should be light sensor
-// TODO: double check datasheet, could be faster (smaller delays)
+// Adafruit admits in their source code that this algorithm might be out of date
 void light_sensor_read(Light_Sensor h) {
-  if (i2c_start(TSL2561_TWI_ADDRESS_WRITE) != 0) {
+  if (!TSL2591_check_connectivity()) {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
     return;
   }
-  _delay_ms(2); // TODO: wait could be shorter?
-  i2c_stop(); // should be woke now
-  i2c_start(TSL2561_TWI_ADDRESS_WRITE); // tell it to generate the temp and hum
-  i2c_write(READREGCODE);
-  i2c_write(BEGINREG);
-  i2c_write(NUMREGTOREAD);
+  TSL2591_enable();
+  for (uint8_t i = 0; i <= TSL2591_CHOSEN_INTEGRATION; i++)
+    _delay_ms(120); // in 100ms steps except that we give 20 ms extra time each
+
+  // request data for channel 1
+  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CHAN1_LOW);
   i2c_stop();
-  _delay_ms(10); // TODO: wait could be shorter?
-  uint8_t ret[NUMBYTESTOSTORE];
-  i2c_start(TSL2561_TWI_ADDRESS_READ); // now read the data
-  for (int i = 0; i < NUMBYTESTOSTORE - 1; i++) ret[i] = i2c_read(1);
-  ret[NUMBYTESTOSTORE - 1] = i2c_read(0); // this reads and sends a CRC signal
+
+  i2c_start(TSL2591_TWI_ADDRESS_READ);
+  uint16_t chan1 = i2c_read(1);
+  chan1 = (i2c_read(0) << 8); // bytes sent in reverse order
+
+  // request data for channel 0
+  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+  i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CHAN0_LOW);
   i2c_stop();
-  if (ret[0] != READREGCODE || ret[1] != NUMREGTOREAD) {
-    uart_puts_P(PSTR("Error reading light sensor\r\n"));
+
+  uint16_t chan0 = i2c_read(1);
+  chan0 = (i2c_read(0) << 8); // bytes sent in reverse order
+
+  TSL2591_disable();
+
+  // Note that the following was modified for better readability and
+  // optimization
+
+  // BEGIN ARDUINO LIBRARY CODE //
+
+  uint16_t    atime, again;
+  uint32_t    cpl, lux1, lux2, lux;
+
+  // Check for overflow conditions first
+  if ((chan0 == 0xFFFF) | (chan1 == 0xFFFF))
+  {
+    // Signal an overflow
+    uart_puts_P(PSTR("Overflow in reading light sensor data\r\n"));
     return;
   }
-  // note that both these values are 10 times what they should be but
-  // representing with floating point is a terrible idea so we manipulate the
-  // print statement instead
-  uint16_t hum = ((ret[2] << 8) | ret[3]);
-  uint16_t temp = ((ret[4] << 8) | ret[5]); // NOTE that leading bit is sign
-  uart_printf("Humidity is %d.%d %%RH and Temperature is %s%d.%d C\r\n",
-      hum / 10, hum % 10, // hum / 10 first, then last digit goes after '.'
-      ret[4] & 0x80 ? "-" : "", // handle the sign (if leading is set, then neg)
-      (temp & 0x7f) / 10, temp % 10); // same as humidity except don't count b15
+
+  // Note: This algorithm is based on preliminary coefficients
+  // provided by AMS and may need to be updated in the future
+
+  // convert to actual value in ms
+  atime = (TSL2591_CHOSEN_INTEGRATION + 1) * 100;
+
+  switch (TSL2591_CHOSEN_GAIN)
+  {
+    case TSL2591_GAIN_LOW :
+      again = 1.0;
+      break;
+    case TSL2591_GAIN_MED :
+      again = 25.0;
+      break;
+    case TSL2591_GAIN_HIGH :
+      again = 428.0;
+      break;
+    case TSL2591_GAIN_MAX :
+      again = 9876.0;
+      break;
+    default:
+      again = 1.0;
+      break;
+  }
+
+  // NOTE: the LUX COEFs are 100 time what they used to be (look at defines)
+
+  cpl = (atime * again) / TSL2591_LUX_DF;
+
+  lux1 = (((chan0 * 100) - (TSL2591_LUX_COEFB * chan1)) / (100 * cpl));
+  lux2 = ((TSL2591_LUX_COEFC * chan0) - (TSL2591_LUX_COEFD * chan1)) /
+    (cpl * 100);
+  lux = lux1 > lux2 ? lux1 : lux2;
+
+  // Signal I2C had no errors
+  uart_printf("Light reading is %d lx\r\n", lux);
+
+  // END ARDUINO LIBRARY CODE //
 }
 
-// FIXME should be light sensor
 void light_sensor_destroy(Light_Sensor h) {
+  TSL2591_disable(); // should already be disabled but lets be assured
   uart_puts_P(PSTR("Light_Sensor cleared\r\n"));
 }

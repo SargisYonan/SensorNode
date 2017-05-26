@@ -41,7 +41,7 @@ CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
 MODULES = main parser uart module actuator OneWire fona
-MODULES += twimaster humidity_sensor
+MODULES += twimaster humidity_sensor light_sensor
 OBJECTS = $(MODULES:%=%.o)
 
 ######## OS Detection #########

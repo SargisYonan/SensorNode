@@ -12,6 +12,7 @@
 #include "module.h"
 #include "actuator.h"
 #include "common.h"
+#include "light_sensor.h"
 
 #define MAX_DEVICES 100
 
@@ -29,6 +30,9 @@ uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
 #ifdef ONEWIRE_H
   static const char temp_sens_str[] PROGMEM = TEMP_SENSOR_IDENTIFIER_STRING;
 #endif
+#ifdef LIGHT_SENSOR_H_
+  static const char light_sensor_str[] PROGMEM = LIGHT_SENSOR_IDENTIFIER_STRING;
+#endif
 
 // type i points to a corresponding string
 static PGM_P type_num_to_string_map[MAX_DEVICES] = {
@@ -38,6 +42,9 @@ static PGM_P type_num_to_string_map[MAX_DEVICES] = {
 #ifdef ONEWIRE_H
   temp_sens_str,
 #endif
+#ifdef LIGHT_SENSOR_H_
+  light_sensor_str,
+#endif
 };
 // type i points to a corresponding creation function
 static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
@@ -46,6 +53,9 @@ static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
 #endif
 #ifdef ONEWIRE_H
   &new_temp_sensor,
+#endif
+#ifdef LIGHT_SENSOR_H_
+  &new_light_sensor,
 #endif
 };
 // port map
