@@ -41,7 +41,8 @@ void i2c_init(void)
 *************************************************************************/
 unsigned char i2c_start(unsigned char address)
 {
-    uint8_t   twst;
+  //uart_printf("Entering i2c_start\r\n");
+  uint8_t   twst;
 
 	// send START condition
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
@@ -51,7 +52,7 @@ unsigned char i2c_start(unsigned char address)
 
 	// check value of TWI Status Register. Mask prescaler bits.
 	twst = TW_STATUS & 0xF8;
-  uart_printf("1: Status register contains: %#X\r\n", twst);
+  //uart_printf("1: Status register contains: %#X\r\n", twst);
 	if ( (twst != TW_START) && (twst != TW_REP_START)) return 1;
 
 	// send device address
@@ -63,7 +64,7 @@ unsigned char i2c_start(unsigned char address)
 
 	// check value of TWI Status Register. Mask prescaler bits.
 	twst = TW_STATUS & 0xF8;
-  uart_printf("2: Status register contains: %#X\r\n", twst);
+  //uart_printf("2: Status register contains: %#X\r\n", twst);
 	if ((twst != TW_MT_SLA_ACK) && (twst != TW_MR_SLA_ACK)) return 1;
 
 	return 0;
@@ -140,6 +141,7 @@ unsigned char i2c_rep_start(unsigned char address)
 *************************************************************************/
 void i2c_stop(void)
 {
+  //uart_printf("Entering i2c_stop\r\n");
     /* send stop condition */
 	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
 
@@ -158,7 +160,9 @@ void i2c_stop(void)
 *************************************************************************/
 unsigned char i2c_write( unsigned char data )
 {
-    uint8_t   twst;
+
+  //uart_printf("Entering i2c_write\r\n");
+  uint8_t   twst;
 
 	// send data to the previously addressed device
 	TWDR = data;
@@ -169,7 +173,7 @@ unsigned char i2c_write( unsigned char data )
 
 	// check value of TWI Status Register. Mask prescaler bits
 	twst = TW_STATUS & 0xF8;
-  uart_printf("1: Status register contains: %#X\r\n", twst);
+  //uart_printf("1: Status register contains: %#X\r\n", twst);
 	if( twst != TW_MT_DATA_ACK) return 1;
 	return 0;
 
@@ -183,6 +187,7 @@ unsigned char i2c_write( unsigned char data )
 *************************************************************************/
 unsigned char i2c_readAck(void)
 {
+  //uart_printf("Entering i2c_readAck\r\n");
 	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
 	while(!(TWCR & (1<<TWINT)));
 
@@ -198,6 +203,7 @@ unsigned char i2c_readAck(void)
 *************************************************************************/
 unsigned char i2c_readNak(void)
 {
+  //uart_printf("Entering i2c_readNack\r\n");
 	TWCR = (1<<TWINT) | (1<<TWEN);
 	while(!(TWCR & (1<<TWINT)));
 

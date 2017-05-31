@@ -208,7 +208,7 @@ void light_sensor_init(Light_Sensor h) {
   }
 
   // set to default values by adafruit library (note this also disables device)
-  if (TSL2591_set_gain_integration(
+  if (!TSL2591_set_gain_integration(
       TSL2591_CHOSEN_GAIN, TSL2591_CHOSEN_INTEGRATION))
   {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
@@ -228,21 +228,36 @@ void light_sensor_read(Light_Sensor h) {
     _delay_ms(120); // in 100ms steps except that we give 20 ms extra time each
 
   // request data for channel 1
-  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) {
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
+  }
   i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CHAN1_LOW);
   i2c_stop();
 
-  i2c_start(TSL2591_TWI_ADDRESS_READ);
+  if (i2c_start(TSL2591_TWI_ADDRESS_READ)) {
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
+  }
   uint16_t chan1 = i2c_read(1);
   chan1 = (i2c_read(0) << 8); // bytes sent in reverse order
+  i2c_stop();
 
   // request data for channel 0
-  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) {
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
+  }
   i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CHAN0_LOW);
   i2c_stop();
 
+  if (i2c_start(TSL2591_TWI_ADDRESS_READ)) {
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
+  }
   uint16_t chan0 = i2c_read(1);
   chan0 = (i2c_read(0) << 8); // bytes sent in reverse order
+  i2c_stop();
 
   TSL2591_disable();
 
