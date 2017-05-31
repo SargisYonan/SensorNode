@@ -18,60 +18,64 @@ Current_Sensor new_current_sensor(uint8_t type_num, Current_Sensor cs) {
   }
   cs.type_num = type_num;
   cs.init = &current_sensor_init;
-  cs.write = &current_sensor_write;
   cs.read = &current_sensor_read;
   cs.destroy = &current_sensor_destroy;
   return cs;
 }
 
-// currently a hardcoded solution
 void current_sensor_init(Current_Sensor cs) {
-  if (cs.pin_count != 2) {
+  if (cs.pin_count != 1) {
     uart_puts_P(
-        PSTR("Current Sensor needs to be initialized with 2 pins (TX, RX)\r\n"));
+        PSTR("Current Sensor needs to be initialized with 1 pin\r\n"));
     return;
   }
-  *cs.ddr[0] |= _BV(cs.reg_bit[0]); // TX is an output so set bit
-  *cs.ddr[1] &= ~_BV(cs.reg_bit[1]); // RX is input so clear bit
+  if (*cs.port[0] != PORTF) {
+    uart_puts_P(
+        PSTR("Error: All available ADC's are only found on port f\r\n"));
+    return;
+  }
+  ADCSRA |= _BV(ADEN); // enable ADC
+  ADCSRA |= _BV(ADPS2) | _BV(ADPS0); // set ADC prescaler to CPU_F/128, ~125kHz
+
   uart_puts_P(PSTR("Current Sensor successfully initialized\r\n"));
 }
 
 void current_sensor_read(Current_Sensor cs) {
-  if (cs.pin_count != 2 ||
-      ((*cs.ddr[0] & _BV(cs.reg_bit[0])) == 0) || // TX should be output
-      ((*cs.ddr[1] & _BV(cs.reg_bit[1])) != 0)) { // RX should be input
+  if (cs.pin_count != 1) {
     uart_puts_P(
-        PSTR("Error: Current Sensor not initialized with 2 pins\r\n"));
+        PSTR("Current Sensor needs to be initialized with 1 pin\r\n"));
     return;
   }
-  uart_printf("Current Sensor RX is currently %s\r\n",
-      *cs.pin[1] & _BV(cs.reg_bit[1]) ? "SET" : "CLEARED");
-}
+  if (*cs.port[0] != PORTF) {
+    uart_puts_P(
+        PSTR("Error: All available ADC's are only found on port f\r\n"));
+    return;
+  }
+  ADMUX &= ~7; // clear lowest three bits to allow selection of an ADC channel
+  ADMUX |= cs.reg_bit[0]; // as we want this will contain a value from 0 - 7
 
-void current_sensor_write(Current_Sensor cs, char *str) {
-  if (cs.pin_count != 2 ||
-      ((*cs.ddr[0] & _BV(cs.reg_bit[0])) == 0) || // TX should be output
-      ((*cs.ddr[1] & _BV(cs.reg_bit[1])) != 0)) { // RX should be input
-    uart_puts_P(
-        PSTR("Error: Current Sensor not initialized with 2 pins\r\n"));
-    return;
-  }
-  if (str[0] == 1) {
-    *cs.port[0] |= _BV(cs.reg_bit[0]);
-    _delay_us(50); // only allow it to turn on for a small amount of time (50us)
-    *cs.port[0] &= ~_BV(cs.reg_bit[0]);
-  }
-  uart_puts_P(PSTR("Successfully actuated CAN BUS for 50 us\r\n"));
+  ADCSRA |= _BV(ADSC); // start conversion of ADC
+  while (!(ADCSRA & _BV(ADIF))); //wait until conversion done
+  ADCSRA |= _BV(ADIF); // sometimes you gotta set it to clear it ...arduino...
+
+  uint32_t adc = ADC;
+
+  uart_printf("Current Sensor has adc reading of %d\r\n",
+      adc);
 }
 
 void current_sensor_destroy(Current_Sensor cs) {
-  if (cs.pin_count != 2) {
+  if (cs.pin_count != 1) {
     uart_puts_P(
-        PSTR("Error: Current Sensor not initialized with 2 pins\r\n"));
+        PSTR("Error: Current Sensor not initialized with 1 pin\r\n"));
     return;
   }
-  *cs.port[0] &= ~_BV(cs.reg_bit[0]); // clear pin before making it an input
-  *cs.ddr[0] &= ~_BV(cs.reg_bit[0]); // pins should be inputs by default
+  if (*cs.port[0] != PORTF) {
+    uart_puts_P(
+        PSTR("Error: All available ADC's are only found on port f\r\n"));
+    return;
+  }
+  ADCSRA &= ~_BV(ADEN); // disable ADC
   uart_puts_P(PSTR("Current Sensor successfully de-initialized\r\n"));
 }
 

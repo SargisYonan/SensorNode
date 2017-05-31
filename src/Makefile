@@ -40,7 +40,7 @@ LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
 
-MODULES = main parser uart module actuator OneWire fona
+MODULES = main parser uart module actuator OneWire fona current_sensor
 MODULES += twimaster humidity_sensor light_sensor can_bus
 OBJECTS = $(MODULES:%=%.o)
 

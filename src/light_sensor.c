@@ -180,20 +180,20 @@ uint8_t TSL2591_set_gain_integration(uint8_t gain, uint8_t integration) {
 // RETURNS:
 // the light_sensor with fields sest appropriately
 // or a default module if too many light_sensors already exist
-Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor h) {
+Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor ls) {
   if (light_sensor_count >= LIGHT_SENSOR_MAX) {
-    return h; // remember the key is that it has defaults set
+    return ls; // remember the key is that it has defaults set
   }
-  h.type_num = type_num;
-  h.init = &light_sensor_init;
-  h.read = &light_sensor_read;
-  h.destroy = &light_sensor_destroy;
+  ls.type_num = type_num;
+  ls.init = &light_sensor_init;
+  ls.read = &light_sensor_read;
+  ls.destroy = &light_sensor_destroy;
   light_sensor_count++;
-  return h;
+  return ls;
 }
 
 // should be good
-void light_sensor_init(Light_Sensor h) {
+void light_sensor_init(Light_Sensor ls) {
   i2c_init();
 
   // Make sure we're actually connected and operating as expected
@@ -214,7 +214,7 @@ void light_sensor_init(Light_Sensor h) {
 }
 
 // Adafruit admits in their source code that this algorithm might be out of date
-void light_sensor_read(Light_Sensor h) {
+void light_sensor_read(Light_Sensor ls) {
   if (!TSL2591_check_connectivity()) {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
     return;
@@ -313,7 +313,7 @@ void light_sensor_read(Light_Sensor h) {
   // END ARDUINO LIBRARY CODE //
 }
 
-void light_sensor_destroy(Light_Sensor h) {
+void light_sensor_destroy(Light_Sensor ls) {
   TSL2591_disable(); // should already be disabled but lets be assured
   uart_puts_P(PSTR("Light_Sensor cleared\r\n"));
 }
