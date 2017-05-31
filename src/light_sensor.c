@@ -4,10 +4,8 @@
 #include <util/delay.h>
 
 #define TSL2591_TWI_ADDRESS 0x29 // there is only one available address
-//#define TSL2591_TWI_ADDRESS_WRITE ((TSL2591_TWI_ADDRESS << 1) | I2C_WRITE)
-#define TSL2591_TWI_ADDRESS_WRITE ((TSL2591_TWI_ADDRESS) + I2C_WRITE)
-//#define TSL2591_TWI_ADDRESS_READ ((TSL2591_TWI_ADDRESS << 1) | I2C_READ)
-#define TSL2591_TWI_ADDRESS_READ ((TSL2591_TWI_ADDRESS) + I2C_READ)
+#define TSL2591_TWI_ADDRESS_WRITE ((TSL2591_TWI_ADDRESS << 1) | I2C_WRITE)
+#define TSL2591_TWI_ADDRESS_READ ((TSL2591_TWI_ADDRESS << 1) | I2C_READ)
 
 #define TSL2591_CHOSEN_GAIN TSL2591_GAIN_MED
 #define TSL2591_CHOSEN_INTEGRATION TSL2591_INTEGRATIONTIME_100MS
@@ -125,13 +123,13 @@ uint8_t TSL2591_check_connectivity(void) {
   i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_ID);
   i2c_stop();
 
-  uart_puts_P(PSTR("Checking connectivity finished 1\r\n"));
+  //uart_puts_P(PSTR("Checking connectivity finished 1\r\n"));
   // then read the data
   if (i2c_start(TSL2591_TWI_ADDRESS_READ)) return 0;
   uint8_t id = i2c_read(0);
   i2c_stop();
 
-  uart_puts_P(PSTR("Checking connectivity finished 2\r\n"));
+  //uart_puts_P(PSTR("Checking connectivity finished 2\r\n"));
   return (id == 0x50 ? 1 : 0); // id should be returned as 0x50 normally
 }
 
@@ -142,7 +140,8 @@ uint8_t TSL2591_enable(void) {
 
   // enable device and ambient light sensor
   i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_ENABLE);
-  i2c_write(TSL2591_ENABLE_POWERON | TSL2591_ENABLE_AEN);
+  i2c_write(TSL2591_ENABLE_POWERON | TSL2591_ENABLE_AEN | TSL2591_ENABLE_AIEN |
+      TSL2591_ENABLE_NPIEN);
 
   i2c_stop();
   return 1;
@@ -162,10 +161,10 @@ uint8_t TSL2591_disable(void) {
 }
 
 // private function that sets the gain and integration time of the sensor
-void TSL2591_set_gain_integration(uint8_t gain, uint8_t integration) {
+uint8_t TSL2591_set_gain_integration(uint8_t gain, uint8_t integration) {
   TSL2591_enable();
 
-  i2c_start(TSL2591_TWI_ADDRESS_WRITE);
+  if (i2c_start(TSL2591_TWI_ADDRESS_WRITE)) return 0;
 
   // set the gain and integration time of the device
   i2c_write(TSL2591_COMMAND_BIT | TSL2591_REGISTER_CONTROL);
@@ -174,6 +173,7 @@ void TSL2591_set_gain_integration(uint8_t gain, uint8_t integration) {
   i2c_stop();
 
   TSL2591_disable();
+  return 1;
 }
 
 // sets an index of the light_sensor module array to be the new light_sensor's info
@@ -208,9 +208,12 @@ void light_sensor_init(Light_Sensor h) {
   }
 
   // set to default values by adafruit library (note this also disables device)
-  TSL2591_set_gain_integration(
-      TSL2591_CHOSEN_GAIN, TSL2591_CHOSEN_INTEGRATION);
-
+  if (TSL2591_set_gain_integration(
+      TSL2591_CHOSEN_GAIN, TSL2591_CHOSEN_INTEGRATION))
+  {
+    uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
+    return;
+  }
   uart_puts_P(PSTR("light sensor initialized\r\n"));
 }
 

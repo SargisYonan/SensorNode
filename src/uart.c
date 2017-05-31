@@ -56,7 +56,7 @@ void uart_init (void) {
 // TODO: inform user of inability to transmit
 void uart_putc (unsigned char data) {
   UCSR0B |= _BV(UDRIE0); // service when data register is empty, enable ISR
-  if ((TXtail + 1) % TX_BUF_SIZE == TXhead) return; // buffer full
+  if ((TXtail + 1) % TX_BUF_SIZE == TXhead) uart_flushTX(); // force a flush
   TXbuf[TXtail] = data;
   TXtail = (TXtail + 1) % TX_BUF_SIZE;
 }

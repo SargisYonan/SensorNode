@@ -164,7 +164,6 @@ unsigned char i2c_write( unsigned char data )
 	TWDR = data;
 	TWCR = (1<<TWINT) | (1<<TWEN);
 
-  uart_puts_P(PSTR("Entering i2c_write and waiting\r\n"));
 	// wait until transmission completed
 	while(!(TWCR & (1<<TWINT)));
 
