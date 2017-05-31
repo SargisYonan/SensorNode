@@ -452,7 +452,6 @@ float getTemperatureC(Temp_Sensor t)
 // Sensor Node v3 module stuff //
 
 uint8_t temp_sensor_count = 0;
-uint8_t temp_sensor_type_num = -1; // needs to be set on first creation of Temp_Sensor
 
 // sets an index of the temp_sensor module array to be the new temp_sensor's info
 // also sets the fields accordingly
@@ -463,10 +462,7 @@ Temp_Sensor new_temp_sensor(uint8_t type_num, Temp_Sensor t) {
   if (temp_sensor_count >= TEMP_SENSOR_MAX) {
     return t; // remember the key is that it has defaults set
   }
-  if (temp_sensor_count == 0) {
-    temp_sensor_type_num = type_num;
-  }
-  t.type_num = temp_sensor_type_num;
+  t.type_num = type_num;
   t.init = &temp_sensor_init;
   t.read = &temp_sensor_read;
   return t;

@@ -6,7 +6,6 @@
 #include "uart.h"
 
 static uint8_t fona_count = 0;
-static uint8_t fona_type_num = -1; // needs to be set on first creation of Fona
 
 // sets an index of the fona module array to be the new fona's info
 // also sets the fields accordingly
@@ -17,10 +16,7 @@ Fona new_fona(uint8_t type_num, Fona f) {
   if (fona_count >= FONA_MAX) {
     return f; // remember the key is that it has defaults set
   }
-  if (fona_count == 0) {
-    fona_type_num = type_num;
-  }
-  f.type_num = fona_type_num;
+  f.type_num = type_num;
   f.init = &fona_init;
   f.read = &fona_read;
   f.write = &fona_write;

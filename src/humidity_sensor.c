@@ -15,7 +15,6 @@
 #include "twimaster.h"
 
 static uint8_t humidity_sensor_count = 0;
-static uint8_t humidity_sensor_type_num = -1; // needs to be set on first creation of Humidity_Sensor
 
 // sets an index of the humidity_sensor module array to be the new humidity_sensor's info
 // also sets the fields accordingly
@@ -26,10 +25,7 @@ Humidity_Sensor new_humidity_sensor(uint8_t type_num, Humidity_Sensor h) {
   if (humidity_sensor_count >= HUMIDITY_SENSOR_MAX) {
     return h; // remember the key is that it has defaults set
   }
-  if (humidity_sensor_count == 0) {
-    humidity_sensor_type_num = type_num;
-  }
-  h.type_num = humidity_sensor_type_num;
+  h.type_num = type_num;
   h.init = &humidity_sensor_init;
   h.read = &humidity_sensor_read;
   h.destroy = &humidity_sensor_destroy;

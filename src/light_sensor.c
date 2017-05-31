@@ -44,7 +44,6 @@
 #include "twimaster.h"
 
 static uint8_t light_sensor_count = 0;
-static uint8_t light_sensor_type_num = -1; // needs to be set on first creation of Light_Sensor
 
 // FROM ADAFRUIT TSL2591 LIBRARY //
 
@@ -185,10 +184,7 @@ Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor h) {
   if (light_sensor_count >= LIGHT_SENSOR_MAX) {
     return h; // remember the key is that it has defaults set
   }
-  if (light_sensor_count == 0) {
-    light_sensor_type_num = type_num;
-  }
-  h.type_num = light_sensor_type_num;
+  h.type_num = type_num;
   h.init = &light_sensor_init;
   h.read = &light_sensor_read;
   h.destroy = &light_sensor_destroy;

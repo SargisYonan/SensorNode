@@ -5,8 +5,7 @@
 
 #include "uart.h"
 
-uint8_t can_bus_count = 0;
-uint8_t can_bus_type_num = -1; // needs to be set on first creation of Can_Bus
+static uint8_t can_bus_count = 0;
 
 // sets an index of the can_bus module array to be the new can_bus's info
 // also sets the fields accordingly
@@ -17,10 +16,7 @@ Can_Bus new_can_bus(uint8_t type_num, Can_Bus cb) {
   if (can_bus_count >= CAN_BUS_MAX) {
     return cb; // remember the key is that it has defaults set
   }
-  if (can_bus_count == 0) {
-    can_bus_type_num = type_num;
-  }
-  cb.type_num = can_bus_type_num;
+  cb.type_num = type_num;
   cb.init = &can_bus_init;
   cb.write = &can_bus_write;
   cb.read = &can_bus_read;

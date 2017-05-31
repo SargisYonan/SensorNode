@@ -5,7 +5,6 @@
 #include "uart.h"
 
 static uint8_t actuator_count = 0;
-static uint8_t actuator_type_num = -1; // needs to be set on first creation of Actuator
 
 // sets an index of the actuator module array to be the new actuator's info
 // also sets the fields accordingly
@@ -16,10 +15,7 @@ Actuator new_actuator(uint8_t type_num, Actuator a) {
   if (actuator_count >= ACTUATOR_MAX) {
     return a; // remember the key is that it has defaults set
   }
-  if (actuator_count == 0) {
-    actuator_type_num = type_num;
-  }
-  a.type_num = actuator_type_num;
+  a.type_num = type_num;
   a.init = &actuator_init;
   a.write = &actuator_write;
   a.destroy = &actuator_destroy;

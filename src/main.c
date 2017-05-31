@@ -135,7 +135,7 @@ int main(void){
 
   // initialize num_types to number of types
   for (num_types = 0; type_num_to_string_map[num_types] != NULL; num_types++);
-  
+
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 

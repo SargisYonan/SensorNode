@@ -7,7 +7,7 @@
 #define CAN_BUS_MAX 10
 #endif
 
-#define CAN_BUS_IDENTIFIER_STRING "CAN_BUS_TRANSMIT"
+#define CAN_BUS_IDENTIFIER_STRING "CAN_BUS"
 
 typedef Module Can_Bus;
 
