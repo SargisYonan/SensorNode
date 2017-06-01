@@ -3,7 +3,7 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
-#define AM2315_TWI_ADDRESS 0x5c // could be 0xB8 according to datasheet
+#define AM2315_TWI_ADDRESS 0x5C // could be 0xB8 or 0x5c according to datasheet
 #define AM2315_TWI_ADDRESS_WRITE ((AM2315_TWI_ADDRESS << 1) | I2C_WRITE)
 #define AM2315_TWI_ADDRESS_READ ((AM2315_TWI_ADDRESS << 1) | I2C_READ)
 #define READREGCODE 0x03
@@ -36,14 +36,12 @@ Humidity_Sensor new_humidity_sensor(uint8_t type_num, Humidity_Sensor h) {
 void humidity_sensor_init(Humidity_Sensor h) {
   i2c_init();
   uart_puts_P(PSTR("Humidity_Sensor initialized\r\n"));
+  humidity_sensor_read(h);
 }
 
 // TODO: double check datasheet, could be faster (smaller delays)
 void humidity_sensor_read(Humidity_Sensor h) {
-  if (i2c_start(AM2315_TWI_ADDRESS_WRITE) != 0) {
-    uart_puts_P(PSTR("Couldn't communicate with humidity sensor\r\n"));
-    return;
-  }
+  i2c_start(AM2315_TWI_ADDRESS_WRITE); // Sensor doesn't respond to start signal
   _delay_ms(2); // TODO: wait could be shorter?
   i2c_stop(); // should be woke now
   i2c_start(AM2315_TWI_ADDRESS_WRITE); // tell it to generate the temp and hum
