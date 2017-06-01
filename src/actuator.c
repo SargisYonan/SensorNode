@@ -31,6 +31,7 @@ void actuator_init(Actuator a) {
     return;
   }
   *a.ddr[0] |= _BV(a.reg_bit[0]);
+  *a.port[0] &= ~_BV(a.reg_bit[0]); // start this way in new wiring scheme
   uart_puts_P(PSTR("Actuator initialized\r\n"));
 }
 
@@ -39,11 +40,11 @@ void actuator_write(Actuator a, char *str) {
     uart_puts_P(PSTR("Cannot write to actuator: DDR set to input\r\n"));
     return;
   }
-  if (str[0] == '0') {
-    *a.port[0] &= ~_BV(a.reg_bit[0]);
+  if (str[0] == '0') { // reversed because of new wiring scheme
+    *a.port[0] |= _BV(a.reg_bit[0]);
     strncpy(str, "OFF\r\n", 6);
   } else if (str[0] == '1') {
-    *a.port[0] |= _BV(a.reg_bit[0]);
+    *a.port[0] &= ~_BV(a.reg_bit[0]);
     strncpy(str, "ON\r\n", 5);
   } else {
     strncpy(str, "INVALID\r\n", 10);
@@ -57,7 +58,7 @@ void actuator_destroy(Actuator a) {
           "Actuator not destroyed due to having more or less than 1 pin\r\n"));
     return;
   }
-  *a.port[0] &= ~_BV(a.reg_bit[0]); // force port off before switching this off
+  *a.port[0] |= _BV(a.reg_bit[0]); // force port off, new wiring scheme
   *a.ddr[0] &= ~_BV(a.reg_bit[0]);
   uart_puts_P(PSTR("Cleared of any settings\r\n"));
 }
