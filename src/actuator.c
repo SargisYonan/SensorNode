@@ -19,7 +19,7 @@ Actuator new_actuator(uint8_t type_num, Actuator a) {
   a.init = &actuator_init;
   a.write = &actuator_write;
   a.destroy = &actuator_destroy;
-  actuator_count++;
+  //actuator_count++;
   return a;
 }
 

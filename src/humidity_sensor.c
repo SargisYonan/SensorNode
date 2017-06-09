@@ -29,7 +29,7 @@ Humidity_Sensor new_humidity_sensor(uint8_t type_num, Humidity_Sensor h) {
   h.init = &humidity_sensor_init;
   h.read = &humidity_sensor_read;
   h.destroy = &humidity_sensor_destroy;
-  humidity_sensor_count++;
+  //humidity_sensor_count++;
   return h;
 }
 

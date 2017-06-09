@@ -21,7 +21,7 @@ Fona new_fona(uint8_t type_num, Fona f) {
   f.read = &fona_read;
   f.write = &fona_write;
   f.destroy = &fona_destroy;
-  fona_count++;
+  //fona_count++;
   return f;
 }
 

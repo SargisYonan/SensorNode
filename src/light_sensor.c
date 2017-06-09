@@ -188,7 +188,7 @@ Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor ls) {
   ls.init = &light_sensor_init;
   ls.read = &light_sensor_read;
   ls.destroy = &light_sensor_destroy;
-  light_sensor_count++;
+  //light_sensor_count++;
   return ls;
 }
 
