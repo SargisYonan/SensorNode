@@ -20,7 +20,7 @@
 #define TX_BUF_SIZE 256
 #endif
 
-void uart_init(void);
+void uart_init(uint16_t);
 
 void uart_putc(unsigned char);
 
@@ -38,7 +38,7 @@ void uart_flushTX(void);
 
 #ifdef USING_UART1
 
-void uart1_init(void);
+void uart1_init(uint16_t);
 
 void uart1_putc(unsigned char);
 

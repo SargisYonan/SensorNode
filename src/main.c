@@ -14,6 +14,7 @@
 #include "common.h"
 #include "light_sensor.h"
 #include "humidity_sensor.h"
+#include "fona.h"
 
 #define MAX_DEVICES 100
 
@@ -37,6 +38,9 @@ uint8_t devices_valid[MAX_DEVICES]; // device exists if its index contains 1
 #ifdef HUMIDITY_SENSOR_H_
   static const char humidity_sensor_str[] PROGMEM = HUMIDITY_SENSOR_IDENTIFIER_STRING;
 #endif
+#ifdef FONA_H_
+  static const char fona_str[] PROGMEM = FONA_IDENTIFIER_STRING;
+#endif
 
 // type i points to a corresponding string
 static PGM_P type_num_to_string_map[MAX_DEVICES] = {
@@ -52,6 +56,9 @@ static PGM_P type_num_to_string_map[MAX_DEVICES] = {
 #ifdef HUMIDITY_SENSOR_H_
   humidity_sensor_str,
 #endif
+#ifdef FONA_H_
+  fona_str,
+#endif
 };
 // type i points to a corresponding creation function
 static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
@@ -66,6 +73,9 @@ static NEW_DEVICE_FUNC_TYPE type_num_to_create_function_map [MAX_DEVICES] = {
 #endif
 #ifdef HUMIDITY_SENSOR_H_
   &new_humidity_sensor,
+#endif
+#ifdef FONA_H_
+  &new_fona,
 #endif
 };
 // port map
@@ -138,7 +148,7 @@ int main(void){
 
   sei();
 
-  uart_init();
+  uart_init(19200);
 
   for (int i = 0; i < MAX_DEVICES; i++)
     devices_valid[i] = 0; // initialize to 0

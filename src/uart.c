@@ -1,7 +1,6 @@
 #include "uart.h"
 
-#define BAUDRATE 19200U
-#define BAUD_PRESCALE (((F_CPU / (BAUDRATE * 16UL))) - 1)
+#define BAUD_PRESCALE(BAUDRATE) (((F_CPU / (BAUDRATE * 16UL))) - 1)
 // TODO: What the hell is this calculation? Where did 16UL come from?
 #define calculate_prescale(FREQ, BAUD) ((FREQ / (BAUD * 16UL)) - 1)
 
@@ -37,9 +36,9 @@ ISR(USART0_UDRE_vect) { // If this interrupt is enabled, we still need to do TX
 }
 
 // function to initialize UART
-void uart_init (void) {
-  UBRR0H = (BAUD_PRESCALE >> 8) & 0xFF;	// get the upper 8 bits
-  UBRR0L = BAUD_PRESCALE & 0xFF;  // get the lower 8 bits
+void uart_init (uint16_t baudrate) {
+  UBRR0H = (BAUD_PRESCALE(baudrate) >> 8) & 0xFF;	// get the upper 8 bits
+  UBRR0L = BAUD_PRESCALE(baudrate) & 0xFF;  // get the lower 8 bits
   UCSR0B |= _BV(TXEN0) | _BV(RXEN0);	// enable receiver and transmitter
   UCSR0B |= _BV(RXCIE0); // enable receive interrupt
   UCSR0C |= _BV(UCSZ01) | _BV(UCSZ00); // 8 data bits
@@ -168,9 +167,9 @@ ISR(USART1_UDRE_vect) { // If this interrupt is enabled, we still need to do TX
 }
 
 // function to initialize UART
-void uart1_init (void) {
-  UBRR1H = (BAUD_PRESCALE >> 8) & 0xFF;	// get the upper 8 bits
-  UBRR1L = BAUD_PRESCALE & 0xFF;  // get the lower 8 bits
+void uart1_init (uint16_t baudrate) {
+  UBRR1H = (BAUD_PRESCALE(baudrate) >> 8) & 0xFF;	// get the upper 8 bits
+  UBRR1L = BAUD_PRESCALE(baudrate) & 0xFF;  // get the lower 8 bits
   UCSR1B |= _BV(TXEN1) | _BV(RXEN1);	// enable receiver and transmitter
   UCSR1B |= _BV(RXCIE1); // enable receive interrupt
   UCSR1C |= _BV(UCSZ11) | _BV(UCSZ10); // 8 data bits
