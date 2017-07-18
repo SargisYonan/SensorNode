@@ -159,19 +159,25 @@ int main(void){
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
-  /*
-  // temporary hardcode
-  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
-  0, 0); // PA0 = pin22
-  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
-  0, 1); // PA1 = pin23
-  create_device(resolve_type_string_to_num(ACTUATOR_IDENTIFIER_STRING),
-  0, 2); // PA2 = pin24
-  create_device(resolve_type_string_to_num(TEMP_SENSOR_IDENTIFIER_STRING),
-  2, 0); // PC0 = pin37
-  */
+  // FIXME: the fona hardcoding begins
+  uint8_t fona_pin_count = 3;
+  // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
+  uint8_t fona_ports[] = {3, 3, 0};
+  uint8_t fona_bits[] = {2, 3, 4};
+  create_device(resolve_type_string_to_num(FONA_IDENTIFIER_STRING), fona_ports,
+      fona_bits, fona_pin_count);
+
+  //for (;;) {
+  //  devices[0].read(devices[0]); // because we know fona is device 0
+  //  uart_flushTX();
+  //  _delay_ms(500);
+  //}
+
+  // FIXME: THE fona hardcoding ends
 
   while (1) {
+
+
     // this way, cmd_index will point to the NULL character at the end
     // as well as not count it as a written index (if you treat cmd_index as
     // the size)
