@@ -164,14 +164,17 @@ int main(void){
   // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
   uint8_t fona_ports[] = {3, 3, 0};
   uint8_t fona_bits[] = {2, 3, 4};
+  /*
   create_device(resolve_type_string_to_num(FONA_IDENTIFIER_STRING), fona_ports,
       fona_bits, fona_pin_count);
 
-  //for (;;) {
-  //  devices[0].read(devices[0]); // because we know fona is device 0
-  //  uart_flushTX();
-  //  _delay_ms(500);
-  //}
+  for (;;) {
+    devices[0].read(devices[0]); // because we know fona is device 0
+    uart_flushTX();
+    _delay_ms(500);
+    devices[0].write(devices[0], "This is a test!!!");
+  }
+  */
 
   // FIXME: THE fona hardcoding ends
 

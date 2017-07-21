@@ -25,6 +25,7 @@
 // as you might expect, the string is updates to strbuf based off strbuf_ptr
 // there is no "error", this function simply ends by returning strbuf_ptr
 uint8_t fonaGetData(char *strbuf, uint8_t strbuf_ptr, uint8_t attempts) {
+  //uart1_flushTX(); // force flush of data to FONA
   for (uint8_t i = 0; i < attempts;) {
     int16_t numBytes =
       (int16_t) uart1_ngetc(strbuf, strbuf_ptr, RX_BUF_SIZE, RX_BUF_SIZE);
@@ -53,7 +54,9 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
     FONANOTRECEIVEMSG(expectedmsg);
     return 0;
   }
-  if (milliseconds > 32 * ONESECOND) milliseconds = 32 * ONESECOND; // 32sec max
+  //uart1_flushTX(); // force flush of data to FONA
+  if (milliseconds > 4 * ONESECOND) milliseconds = 4 * ONESECOND; // 4sec max
+                                            // because experimentation > math
   timer1_setCounter(0); // reset timer
   for (;;) {
     char strbuf[RX_BUF_SIZE] = "";
@@ -138,13 +141,11 @@ void fona_init(Fona f) {
   uart1_init(4800);
   timer1_init();
 
-  char strbuf[RX_BUF_SIZE];
+  // Basically an initial test to make sure it responds at all
   uart1_puts_P(PSTR("AT\r\n"));
-  _delay_ms(100);
-  uart1_ngetc(strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE); // clear newline
-  _delay_ms(100);
-  if(uart1_ngetc((unsigned char *) strbuf, 0, 20, RX_BUF_SIZE) == -1 || !strstr(strbuf, "OK")) {
-    uart_printf("Error, invalid response from fona: %s\r\n", strbuf);
+  uart_puts_P(PSTR("Sending to FONA: AT\r\n"));
+  if(!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
+    uart_printf("FONA not initialized correctly\r\n");
     return;
   }
 
@@ -155,6 +156,17 @@ void fona_init(Fona f) {
     uart_printf("FONA not initialized correctly\r\n");
     return;
   }
+
+  // send the 0x1a instead
+  /*
+  // SET MESSAGES TO AUTOMATICALLY SEND AFTER AN AMOUNT OF SECONDS
+  uart1_puts_P(PSTR("AT+CIPATS=1,2\r\n")); // enable time of 2 seconds
+  uart_puts_P(PSTR("Sending to FONA: AT+CIPATS=1,2\r\n"));
+  if (!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
+    uart_printf("FONA not initialized correctly\r\n");
+    return;
+  }
+  */
 
   // Ensure that we are on initial IP STATUS STATE
   uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
@@ -200,6 +212,7 @@ void fona_init(Fona f) {
 }
 
 // read everything sent to uart for some number of attempts
+// TODO: make it connect, read some stuff, then disconnect
 void fona_read(Fona f) {
   char strbuf[RX_BUF_SIZE];
   uint8_t strbuf_ptr = 0;
@@ -210,14 +223,27 @@ void fona_read(Fona f) {
   uart_flushTX();
 }
 
-// TODO: write to appropriate uart. if setup correctly, will forward to TCP
-// Specifically, the abstractions for sending the data directly should already
-// be handled at this point
+// TODO: make it connect, send some stuff, then disconnect
 void fona_write(Fona f, char *str) {
-  // TODO: use uart1_puts() directly since transparent mode
   // -s means shell mode
-  if (strcmp(str, "-s") != 0) {
-    uart_puts_P(PSTR("fona_write() not yet ready\r\n"));
+  if (strcmp(str, "-s") != 0) { // send to the server
+
+    // Set it up to send a message (remember, times out and sends after 2
+    // seconds)
+    uart1_puts_P(PSTR("AT+CIPSEND\r\n"));
+    uart_puts_P(PSTR("Sending to FONA: AT+CIPSEND\r\n"));
+
+    uart1_printf("> %s\r\n", str);
+    uart_printf("Sending to FONA: > %s\r\n", str);
+    uart1_putc((unsigned char) 0x1a);
+    uart_puts_P(PSTR("Sending End of Message to FONA\r\n"));
+    if (!fonaWaitForReply("SEND OK\r", 5 * ONESECOND)) {
+      uart_printf("FONA was unable to send message: %s\r\n", str);
+    } else {
+      uart_printf("FONA was successfully able to send message: %s\r\n", str);
+    }
+
+    uart_flushTX();
     return;
   }
   // this is a special shell that runs when "-s" is passed as a string
@@ -239,6 +265,7 @@ void fona_write(Fona f, char *str) {
       if (strbuf_ptr > 1) uart1_printf("%s\r\n", strbuf);
       _delay_ms(100);
       uart1_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE); // clear newline
+      uart_printf("FONA reply %s\r\n", strbuf);
       _delay_ms(100);
       uart1_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE);
       uart_printf("FONA reply %s\r\n", strbuf);
