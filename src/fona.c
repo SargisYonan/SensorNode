@@ -14,7 +14,8 @@
 #define ONESECOND (1000 * MILLISECOND)
 
 #define SERVERPROTOCOL "TCP"
-#define SERVERIP "arboretum-microgrid.ddns.net"
+//#define SERVERIP "arboretum-microgrid.ddns.net"
+#define SERVERIP "arboretum-backend.soe.ucsc.edu"
 #define SERVERPORT "1234"
 
 #define ATTEMPTS10 10
@@ -54,10 +55,9 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
     FONANOTRECEIVEMSG(expectedmsg);
     return 0;
   }
-  //uart1_flushTX(); // force flush of data to FONA
-  if (milliseconds > 4 * ONESECOND) milliseconds = 4 * ONESECOND; // 4sec max
+  if (milliseconds > 30 * ONESECOND) milliseconds = 30 * ONESECOND; // 30sec max
                                             // because experimentation > math
-  timer1_setCounter(0); // reset timer
+  timer1Reset(); // reset timer and millis
   for (;;) {
     char strbuf[RX_BUF_SIZE] = "";
     uint8_t strbuf_ptr = 0;
@@ -70,9 +70,9 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
       }
       strbuf_ptr += numbytes;
 
-      if (timer1_readCounter() / 15.625 >= milliseconds) break;
+      if (timer1Millis() >= milliseconds) break;
     }
-    if (timer1_readCounter()  / 15.625 >= milliseconds) break;
+    if (timer1Millis() >= milliseconds) break;
 
     char *found = strstr(strbuf, expectedmsg);
     strbuf[strbuf_ptr - 1] = '\0'; // remove the carriage return
@@ -228,13 +228,14 @@ void fona_write(Fona f, char *str) {
   // -s means shell mode
   if (strcmp(str, "-s") != 0) { // send to the server
 
-    // Set it up to send a message (remember, times out and sends after 2
-    // seconds)
     uart1_puts_P(PSTR("AT+CIPSEND\r\n"));
     uart_puts_P(PSTR("Sending to FONA: AT+CIPSEND\r\n"));
+    if (!fonaWaitForReply("> ", 10 * ONESECOND)) {
+      uart_printf("FONA was unable to send message: %s\r\n", str);
+    }
 
-    uart1_printf("> %s\r\n", str);
-    uart_printf("Sending to FONA: > %s\r\n", str);
+    uart1_printf("%s\r\n", str);
+    uart_printf("Sending to FONA: %s\r\n", str);
     uart1_putc((unsigned char) 0x1a);
     uart_puts_P(PSTR("Sending End of Message to FONA\r\n"));
     if (!fonaWaitForReply("SEND OK\r", 5 * ONESECOND)) {
@@ -287,7 +288,7 @@ void fona_destroy(Fona f) {
 
   uart1_puts_P(PSTR("AT+CIPSHUT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSHUT\r\n"));
-  if (!fonaWaitForReply("SHUT OK\r", 5 * ONESECOND)) {
+  if (!fonaWaitForReply("SHUT OK\r", 10 * ONESECOND)) {
     uart_printf("FONA not de-initialized correctly\r\n");
     return;
   }
