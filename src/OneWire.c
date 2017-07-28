@@ -473,6 +473,8 @@ void temp_sensor_init(Temp_Sensor t) {
   uart_puts_P(PSTR("Released temp_sensor garbage data\r\n"));
 }
 
-void temp_sensor_read(Temp_Sensor t) {
-  uart_printf("Temperature = %f\r\n", getTemperatureC(t));
+void temp_sensor_read(Temp_Sensor t, char *read_data, uint16_t max_bytes) {
+  float tempC = getTemperatureC(t);
+  uart_printf("Temperature = %f\r\n", tempC);
+  snprintf(read_data, max_bytes, "%f\r\n", tempC);
 }

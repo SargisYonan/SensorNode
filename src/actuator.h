@@ -16,7 +16,7 @@ Actuator new_actuator(uint8_t, Actuator);
 
 void actuator_init(Actuator a);
 
-void actuator_write(Actuator a, char *);
+void actuator_write(Actuator a, char *, uint16_t);
 
 void actuator_destroy(Actuator a);
 

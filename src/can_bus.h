@@ -14,8 +14,8 @@ typedef Module Can_Bus;
 Can_Bus new_can_bus(uint8_t, Can_Bus);
 
 void can_bus_init(Can_Bus); // default init function
-void can_bus_read(Can_Bus); // default read function
-void can_bus_write(Can_Bus, char *); // default write function
+void can_bus_read(Can_Bus, char *, uint16_t); // default read function
+void can_bus_write(Can_Bus, char *, uint16_t); // default write function
 void can_bus_destroy(Can_Bus); // default destroy function
 
 #endif

@@ -36,15 +36,18 @@ Humidity_Sensor new_humidity_sensor(uint8_t type_num, Humidity_Sensor h) {
 void humidity_sensor_init(Humidity_Sensor h) {
   i2c_init();
   uart_puts_P(PSTR("Humidity_Sensor initialized\r\n"));
-  humidity_sensor_read(h);
+  humidity_sensor_read(h, "", 0);
 }
 
 // TODO: double check datasheet, could be faster (smaller delays)
-void humidity_sensor_read(Humidity_Sensor h) {
+void humidity_sensor_read(Humidity_Sensor h, char *read_data, uint16_t max_bytes) {
   i2c_start(AM2315_TWI_ADDRESS_WRITE); // Sensor doesn't respond to start signal
   _delay_ms(2); // TODO: wait could be shorter?
   i2c_stop(); // should be woke now
-  i2c_start(AM2315_TWI_ADDRESS_WRITE); // tell it to generate the temp and hum
+  if(i2c_start(AM2315_TWI_ADDRESS_WRITE)) {// tell it to generate the temp and hum
+    uart_puts_P(PSTR("Couldn't communicate with humidity sensor\r\n"));
+    return;
+  }
   i2c_write(READREGCODE);
   i2c_write(BEGINREG);
   i2c_write(NUMREGTOREAD);
@@ -68,6 +71,7 @@ void humidity_sensor_read(Humidity_Sensor h) {
       hum / 10, hum % 10, // hum / 10 first, then last digit goes after '.'
       ret[4] & 0x80 ? "-" : "", // handle the sign (if leading is set, then neg)
       (temp & 0x7f) / 10, temp % 10); // same as humidity except don't count b15
+  snprintf(read_data, max_bytes, "%d.%d %%RH\r\n", hum / 10, hum % 10);
 }
 
 void humidity_sensor_destroy(Humidity_Sensor h) {

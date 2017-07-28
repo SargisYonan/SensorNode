@@ -16,7 +16,7 @@ Light_Sensor new_light_sensor(uint8_t, Light_Sensor);
 
 void light_sensor_init(Light_Sensor);
 
-void light_sensor_read(Light_Sensor);
+void light_sensor_read(Light_Sensor, char *, uint16_t);
 
 void light_sensor_destroy(Light_Sensor);
 

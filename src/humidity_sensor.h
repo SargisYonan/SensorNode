@@ -16,7 +16,7 @@ Humidity_Sensor new_humidity_sensor(uint8_t, Humidity_Sensor);
 
 void humidity_sensor_init(Humidity_Sensor);
 
-void humidity_sensor_read(Humidity_Sensor);
+void humidity_sensor_read(Humidity_Sensor, char *, uint16_t);
 
 void humidity_sensor_destroy(Humidity_Sensor);
 

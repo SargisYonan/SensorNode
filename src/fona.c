@@ -33,6 +33,7 @@ uint8_t fonaGetData(char *strbuf, uint8_t strbuf_ptr, uint8_t attempts) {
     if (numBytes == -1) {
       strbuf[0] = '\0';
       strbuf_ptr = 0;
+      break;
     } else {
       strbuf_ptr += numBytes;
     }
@@ -145,7 +146,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT\r\n"));
   if(!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -153,7 +154,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIPSHUT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSHUT\r\n"));
   if (!fonaWaitForReply("SHUT OK\r", 5 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -163,7 +164,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIPATS=1,2\r\n")); // enable time of 2 seconds
   uart_puts_P(PSTR("Sending to FONA: AT+CIPATS=1,2\r\n"));
   if (!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
   */
@@ -172,7 +173,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
   if (!fonaWaitForReply("IP INITIAL\r", 1 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -180,7 +181,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CSTT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CSTT\r\n"));
   if (!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -188,7 +189,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIICR\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIICR\r\n"));
   if (!fonaWaitForReply("OK\r", 10 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -199,7 +200,7 @@ void fona_init(Fona f) {
   uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
   if (!fonaWaitForReply("IP STATUS\r", 2 * ONESECOND)) {
-    uart_printf("FONA not initialized correctly\r\n");
+    uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
@@ -213,24 +214,23 @@ void fona_init(Fona f) {
 
 // read everything sent to uart for some number of attempts
 // TODO: make it connect, read some stuff, then disconnect
-void fona_read(Fona f) {
+void fona_read(Fona f, char *read_data, uint16_t max_bytes) {
   char strbuf[RX_BUF_SIZE];
   uint8_t strbuf_ptr = 0;
-  while (fonaGetData(strbuf, strbuf_ptr, ATTEMPTS10) != 0) {
-    uart_printf("FONA received: %s\r\n", strbuf);
-  }
-  uart_puts_P(PSTR("Finished receiving messages from FONA\r\n"));
+  strbuf_ptr = fonaGetData(strbuf, strbuf_ptr, ATTEMPTS10);
+  uart_printf("FONA received: %s\r\n", strbuf);
+  snprintf(read_data, max_bytes, "%s\r\n", strbuf);
   uart_flushTX();
 }
 
 // TODO: make it connect, send some stuff, then disconnect
-void fona_write(Fona f, char *str) {
+void fona_write(Fona f, char *str, uint16_t max_bytes) {
   // -s means shell mode
   if (strcmp(str, "-s") != 0) { // send to the server
 
     uart1_puts_P(PSTR("AT+CIPSEND\r\n"));
     uart_puts_P(PSTR("Sending to FONA: AT+CIPSEND\r\n"));
-    if (!fonaWaitForReply("> ", 10 * ONESECOND)) {
+    if (!fonaWaitForReply("AT+CIPSEND\r", 10 * ONESECOND)) {
       uart_printf("FONA was unable to send message: %s\r\n", str);
     }
 

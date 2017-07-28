@@ -17,9 +17,9 @@ Fona new_fona(uint8_t, Fona);
 
 void fona_init(Fona f);
 
-void fona_read(Fona f);
+void fona_read(Fona f, char *, uint16_t);
 
-void fona_write(Fona f, char *);
+void fona_write(Fona f, char *, uint16_t);
 
 void fona_destroy(Fona f);
 

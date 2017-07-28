@@ -21,16 +21,16 @@ typedef struct Module {
   uint8_t reg_bit[8]; // bit of the above three registers to index into
   uint8_t pin_count; // number of pins assigned. You can use (0 : pin_count - 1)
   void (*init)(struct Module); // init function
-  void (*read)(struct Module); // read function
-  void (*write)(struct Module, char *); // write function
+  void (*read)(struct Module, char *, uint16_t); // read function
+  void (*write)(struct Module, char *, uint16_t); // write function
   void (*destroy)(struct Module); // destroy function
 } Module;
 
 Module new_module(void); // all modules are created with this function
 
 void module_init(Module); // default init function
-void module_read(Module); // default read function
-void module_write(Module, char *); // default write function
+void module_read(Module, char *, uint16_t); // default read function
+void module_write(Module, char *, uint16_t); // default write function
 void module_destroy(Module); // default destroy function
 
 #endif

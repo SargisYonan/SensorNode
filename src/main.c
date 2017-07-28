@@ -164,17 +164,40 @@ int main(void){
   // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
   uint8_t fona_ports[] = {3, 3, 0};
   uint8_t fona_bits[] = {2, 3, 4};
-  /*
+
+  uint8_t hum_pin_count = 2;
+  // PD0 = SCL, PD1 = SDA
+  uint8_t hum_ports[] = {3, 3};
+  uint8_t hum_bits[] = {0, 1};
+
   create_device(resolve_type_string_to_num(FONA_IDENTIFIER_STRING), fona_ports,
       fona_bits, fona_pin_count);
+  create_device(resolve_type_string_to_num(HUMIDITY_SENSOR_IDENTIFIER_STRING),
+      hum_ports, hum_bits, hum_pin_count);
 
+  char fona_read[256];
+  char fona_write[256];
   for (;;) {
-    devices[0].read(devices[0]); // because we know fona is device 0
+    devices[0].read(devices[0], fona_read, 255); // because we know fona is device 0
     uart_flushTX();
-    _delay_ms(500);
-    devices[0].write(devices[0], "This is a test!!!");
+    _delay_ms(2000);
+    uart_printf("Command received: %s\r\n", fona_read);
+    Parser p = parse_cmd(fona_read);
+    if (p.cmd != CHAR_READ) continue; // only works with reads right now
+    uart_puts_P(PSTR("command is valid\r\n"));
+    if (p.device_index >= MAX_DEVICES ||
+        devices_valid[p.device_index] == 0) {
+      uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
+      snprintf(fona_write, 255, "Invalid Device Specified: %d\r\n",
+          p.device_index);
+      devices[0].write(devices[0], fona_write, 255);
+      continue;
+    }
+    devices[p.device_index].read(devices[p.device_index], fona_write, 255);
+    uart_printf("read data: %s\r\nAttempting to send to fona...\r\n", fona_write);
+    devices[0].write(devices[0], fona_write, 255);
+    uart_flushTX();
   }
-  */
 
   // FIXME: THE fona hardcoding ends
 
@@ -193,6 +216,7 @@ int main(void){
     cmd_index += bytes_read;
 
     if (cmd_index > 0 && cmd[cmd_index - 1] == '\r') {
+      char data[256];
       Parser p = parse_cmd((char *) cmd);
       //uart_printf("CMD: %c, ret_str: %s\r\n", p.cmd, p.ret_str); // debug
       switch(p.cmd) { // This assumes the string has been parsed
@@ -220,7 +244,9 @@ int main(void){
             uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
             break;
           }
-          devices[p.device_index].read(devices[p.device_index]);
+          // FIXME: currently reads nothing
+          devices[p.device_index].read(devices[p.device_index], data, 255);
+          uart_printf("read data; %s\r\n", data);
           break;
         case CHAR_WRITE:
           if (p.device_index >= MAX_DEVICES ||
@@ -229,7 +255,7 @@ int main(void){
             break;
           }
           devices[p.device_index].write(devices[p.device_index],
-              (char *) p.ret_str);
+              (char *) p.ret_str, strlen((char *) p.ret_str) + 1);
           break;
         case CHAR_DESTROY:
           if (p.device_index >= MAX_DEVICES ||

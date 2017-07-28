@@ -36,7 +36,7 @@ void can_bus_init(Can_Bus cb) {
   uart_puts_P(PSTR("Can Bus successfully initialized\r\n"));
 }
 
-void can_bus_read(Can_Bus cb) {
+void can_bus_read(Can_Bus cb, char *read_data, uint16_t max_bytes) {
   if (cb.pin_count != 2 ||
       ((*cb.ddr[0] & _BV(cb.reg_bit[0])) == 0) || // TX should be output
       ((*cb.ddr[1] & _BV(cb.reg_bit[1])) != 0)) { // RX should be input
@@ -46,9 +46,11 @@ void can_bus_read(Can_Bus cb) {
   }
   uart_printf("Can Bus RX is currently %s\r\n",
       *cb.pin[1] & _BV(cb.reg_bit[1]) ? "SET" : "CLEARED");
+  snprintf(read_data, max_bytes, "CAN: %s\r\n",
+      *cb.pin[1] & _BV(cb.reg_bit[1]) ? "SET" : "CLEARED");
 }
 
-void can_bus_write(Can_Bus cb, char *str) {
+void can_bus_write(Can_Bus cb, char *str, uint16_t max_bytes) {
   if (cb.pin_count != 2 ||
       ((*cb.ddr[0] & _BV(cb.reg_bit[0])) == 0) || // TX should be output
       ((*cb.ddr[1] & _BV(cb.reg_bit[1])) != 0)) { // RX should be input

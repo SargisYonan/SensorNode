@@ -96,7 +96,8 @@ Parser parse_cmd(char *input_str) {
       }
       device_index = (uint8_t) atoi(token + 1); // index is second character
       p.device_index = device_index;
-      token = strtok(NULL, delimit);
+      char ndelimit[3] = "\r\n"; // custom one so that spaces are included
+      token = strtok(NULL, ndelimit);
       if (!token) { // no string to write
         p.cmd = '\0';
         return p;

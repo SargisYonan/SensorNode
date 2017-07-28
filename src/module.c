@@ -24,11 +24,12 @@ void module_init(Module m) {
   uart_printf("Initialized type: %d\r\n", m.type_num);
 }
 
-void module_read(Module m) {
+void module_read(Module m, char *read_data, uint16_t max_bytes) {
   uart_printf("Read type: %d\r\n", m.type_num);
+  snprintf(read_data, max_bytes, "Read type: %d\r\n", m.type_num);
 }
 
-void module_write(Module m, char *write_data) {
+void module_write(Module m, char *write_data, uint16_t max_bytes) {
   uart_printf("Write to type: %d\r\nWith data: %s\r\n", m.type_num,
       (char *)write_data);
 }

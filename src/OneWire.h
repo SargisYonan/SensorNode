@@ -81,7 +81,7 @@ Temp_Sensor new_temp_sensor(uint8_t, Temp_Sensor);
 
 void temp_sensor_init(Temp_Sensor a);
 
-void temp_sensor_read(Temp_Sensor a);
+void temp_sensor_read(Temp_Sensor a, char *, uint16_t);
 
 
 // Structures //

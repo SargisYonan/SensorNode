@@ -40,7 +40,7 @@ void current_sensor_init(Current_Sensor cs) {
   uart_puts_P(PSTR("Current Sensor successfully initialized\r\n"));
 }
 
-void current_sensor_read(Current_Sensor cs) {
+void current_sensor_read(Current_Sensor cs, char *read_data, uint16_t max_bytes) {
   if (cs.pin_count != 1) {
     uart_puts_P(
         PSTR("Current Sensor needs to be initialized with 1 pin\r\n"));
@@ -62,6 +62,7 @@ void current_sensor_read(Current_Sensor cs) {
 
   uart_printf("Current Sensor has adc reading of %d\r\n",
       adc);
+  snprintf(read_data, max_bytes, "%d\r\n");
 }
 
 void current_sensor_destroy(Current_Sensor cs) {

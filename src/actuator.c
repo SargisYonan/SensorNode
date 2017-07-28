@@ -35,7 +35,7 @@ void actuator_init(Actuator a) {
   uart_puts_P(PSTR("Actuator initialized\r\n"));
 }
 
-void actuator_write(Actuator a, char *str) {
+void actuator_write(Actuator a, char *str, uint16_t max_bytes) {
   if (!(*a.ddr[0] & _BV(a.reg_bit[0]))) {
     uart_puts_P(PSTR("Cannot write to actuator: DDR set to input\r\n"));
     return;
