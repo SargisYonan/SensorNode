@@ -159,6 +159,7 @@ int main(void){
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
+  /*
   // FIXME: the fona hardcoding begins
   uint8_t fona_pin_count = 3;
   // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
@@ -177,14 +178,22 @@ int main(void){
 
   char fona_read[256];
   char fona_write[256];
+  int no_receive_count = 0;
   for (;;) {
     devices[0].read(devices[0], fona_read, 255); // because we know fona is device 0
     uart_flushTX();
     _delay_ms(2000);
     uart_printf("Command received: %s\r\n", fona_read);
     Parser p = parse_cmd(fona_read);
-    if (p.cmd != CHAR_READ) continue; // only works with reads right now
+    if (p.cmd != CHAR_READ) {
+      if (no_receive_count++ > 10) {
+        devices[0].init(devices[0]); // reattempt conn
+        no_receive_count = 0;
+      }
+      continue; // only works with reads right now
+    }
     uart_puts_P(PSTR("command is valid\r\n"));
+    no_receive_count = 0;
     if (p.device_index >= MAX_DEVICES ||
         devices_valid[p.device_index] == 0) {
       uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
@@ -200,6 +209,7 @@ int main(void){
   }
 
   // FIXME: THE fona hardcoding ends
+  */
 
   while (1) {
 

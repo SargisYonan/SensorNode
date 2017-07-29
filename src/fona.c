@@ -91,7 +91,7 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
 uint8_t fonaAttemptConnection(void) {
   uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
-  if (!fonaWaitForReply("IP STATUS\r", 2 * ONESECOND)) {
+  if (!fonaWaitForReply("IP STATUS\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR(
           "FONA isn't in correct internal state to start a connection"));
     return 0;
@@ -145,7 +145,7 @@ void fona_init(Fona f) {
   // Basically an initial test to make sure it responds at all
   uart1_puts_P(PSTR("AT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT\r\n"));
-  if(!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
+  if(!fonaWaitForReply("OK\r", 20 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
@@ -153,7 +153,7 @@ void fona_init(Fona f) {
   // SHUTOFF ALL GPRS COMMUNICATIONS
   uart1_puts_P(PSTR("AT+CIPSHUT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSHUT\r\n"));
-  if (!fonaWaitForReply("SHUT OK\r", 5 * ONESECOND)) {
+  if (!fonaWaitForReply("SHUT OK\r", 20 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
@@ -172,15 +172,15 @@ void fona_init(Fona f) {
   // Ensure that we are on initial IP STATUS STATE
   uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
-  if (!fonaWaitForReply("IP INITIAL\r", 1 * ONESECOND)) {
+  if (!fonaWaitForReply("IP INITIAL\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
 
   // Confirm APN, USERNAME, PASS (NOTE: you need not re-specify)
-  uart1_puts_P(PSTR("AT+CSTT\r\n"));
+  uart1_puts_P(PSTR("AT+CSTT=\"wholesale\",\"\",\"\"\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CSTT\r\n"));
-  if (!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
+  if (!fonaWaitForReply("OK\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
     return;
   }
