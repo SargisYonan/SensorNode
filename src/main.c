@@ -159,7 +159,6 @@ int main(void){
   unsigned char cmd[TX_BUF_SIZE + 1]; // max amount written by uart_ngetc()
   uint16_t cmd_index = 0;
 
-  /*
   // FIXME: the fona hardcoding begins
   uint8_t fona_pin_count = 3;
   // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
@@ -181,9 +180,9 @@ int main(void){
   int no_receive_count = 0;
   for (;;) {
     devices[0].read(devices[0], fona_read, 255); // because we know fona is device 0
-    uart_flushTX();
+    //uart_flushTX();
     _delay_ms(2000);
-    uart_printf("Command received: %s\r\n", fona_read);
+    //uart_printf("Command received: %s\r\n", fona_read);
     Parser p = parse_cmd(fona_read);
     if (p.cmd != CHAR_READ) {
       if (no_receive_count++ > 10) {
@@ -192,24 +191,29 @@ int main(void){
       }
       continue; // only works with reads right now
     }
-    uart_puts_P(PSTR("command is valid\r\n"));
+    //uart_puts_P(PSTR("command is valid\r\n"));
     no_receive_count = 0;
     if (p.device_index >= MAX_DEVICES ||
         devices_valid[p.device_index] == 0) {
-      uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
+      //uart_printf("%d: Invalid Device Specified\r\n", p.device_index);
       snprintf(fona_write, 255, "Invalid Device Specified: %d\r\n",
           p.device_index);
       devices[0].write(devices[0], fona_write, 255);
       continue;
     }
-    devices[p.device_index].read(devices[p.device_index], fona_write, 255);
-    uart_printf("read data: %s\r\nAttempting to send to fona...\r\n", fona_write);
+    memset(fona_write, '\0', 256);
+    uint8_t type_num = devices[p.device_index].type_num;
+    //uart_printf("type num is %d\r\n", type_num);
+    strcpy_P(fona_write, type_num_to_string_map[type_num]);
+    strcat(fona_write, "=");
+    devices[p.device_index].read(devices[p.device_index],
+        fona_write + strlen(fona_write), 255 - strlen(fona_write));
+    //uart_printf("read data: %s\r\nAttempting to send to fona...\r\n", fona_write);
     devices[0].write(devices[0], fona_write, 255);
-    uart_flushTX();
+    //uart_flushTX();
   }
 
   // FIXME: THE fona hardcoding ends
-  */
 
   while (1) {
 
