@@ -2,20 +2,20 @@
 
 Table 1: Devices
 
-device_id, device_name, type_id
+device_id, device_name, type_id, description
 
 ==========
 
 Table 2: Device Types
 
-type_id, type_name, r/w [0bRW], unit_name_short, unit_name_long, type_count,
+type_id, type_name, rw_bitmask, unit_name_short, unit_name_long, type_count,
 description
 
 ==========
 
 Table 3: Data Entries
 
-type_id, data, timestamp
+device_id, data, timestamp
 
 ==========
 
