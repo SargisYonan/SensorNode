@@ -51,6 +51,7 @@ void can_bus_read(Can_Bus cb, char *read_data, uint16_t max_bytes) {
 }
 
 void can_bus_write(Can_Bus cb, char *str, uint16_t max_bytes) {
+  if (max_bytes) {} // stop complaining
   if (cb.pin_count != 2 ||
       ((*cb.ddr[0] & _BV(cb.reg_bit[0])) == 0) || // TX should be output
       ((*cb.ddr[1] & _BV(cb.reg_bit[1])) != 0)) { // RX should be input

@@ -41,6 +41,7 @@ void humidity_sensor_init(Humidity_Sensor h) {
 
 // TODO: double check datasheet, could be faster (smaller delays)
 void humidity_sensor_read(Humidity_Sensor h, char *read_data, uint16_t max_bytes) {
+  if (h.write) {} // stop complaining
   i2c_start(AM2315_TWI_ADDRESS_WRITE); // Sensor doesn't respond to start signal
   _delay_ms(2); // TODO: wait could be shorter?
   i2c_stop(); // should be woke now
@@ -75,5 +76,6 @@ void humidity_sensor_read(Humidity_Sensor h, char *read_data, uint16_t max_bytes
 }
 
 void humidity_sensor_destroy(Humidity_Sensor h) {
+  if (h.write) {} // stop complaining
   uart_puts_P(PSTR("Humidity_Sensor cleared\r\n"));
 }

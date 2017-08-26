@@ -60,9 +60,9 @@ void current_sensor_read(Current_Sensor cs, char *read_data, uint16_t max_bytes)
 
   uint32_t adc = ADC;
 
-  uart_printf("Current Sensor has adc reading of %d\r\n",
+  uart_printf("Current Sensor has adc reading of %lu\r\n",
       adc);
-  snprintf(read_data, max_bytes, "%d\r\n");
+  snprintf(read_data, max_bytes, "%lu\r\n", adc);
 }
 
 void current_sensor_destroy(Current_Sensor cs) {

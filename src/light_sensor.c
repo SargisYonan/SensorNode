@@ -194,6 +194,7 @@ Light_Sensor new_light_sensor(uint8_t type_num, Light_Sensor ls) {
 
 // should be good
 void light_sensor_init(Light_Sensor ls) {
+  if (ls.write) {} // stop complaining
   i2c_init();
 
   // Make sure we're actually connected and operating as expected
@@ -215,6 +216,7 @@ void light_sensor_init(Light_Sensor ls) {
 
 // Adafruit admits in their source code that this algorithm might be out of date
 void light_sensor_read(Light_Sensor ls, char *read_data, uint16_t max_bytes) {
+  if (ls.write) {} // stop complaining
   if (!TSL2591_check_connectivity()) {
     uart_puts_P(PSTR("Couldn't communicate with light sensor\r\n"));
     return;
@@ -308,13 +310,14 @@ void light_sensor_read(Light_Sensor ls, char *read_data, uint16_t max_bytes) {
   lux = lux1 > lux2 ? lux1 : lux2;
 
   // Signal I2C had no errors
-  uart_printf("Light reading is %d lx\r\n", lux);
-  snprintf(read_data, max_bytes, "%d lx\r\n", lux);
+  uart_printf("Light reading is %lu lx\r\n", lux);
+  snprintf(read_data, max_bytes, "%lu lx\r\n", lux);
 
   // END ARDUINO LIBRARY CODE //
 }
 
 void light_sensor_destroy(Light_Sensor ls) {
+  if (ls.write) {} // stop complaining
   TSL2591_disable(); // should already be disabled but lets be assured
   uart_puts_P(PSTR("Light_Sensor cleared\r\n"));
 }

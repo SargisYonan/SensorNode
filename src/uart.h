@@ -56,4 +56,44 @@ void uart1_flushTX(void);
 
 #endif // USING_UART1
 
+#ifdef USING_UART2
+
+void uart2_init(uint16_t);
+
+void uart2_putc(unsigned char);
+
+void uart2_puts(unsigned char *);
+
+void uart2_puts_P(PGM_P);
+
+unsigned char uart2_getc(void);
+
+uint16_t uart2_ngetc(unsigned char *, uint16_t, uint16_t, uint16_t);
+
+void uart2_printf(char *, ...);
+
+void uart2_flushTX(void);
+
+#endif // USING_UART2
+
+#ifdef USING_UART3
+
+void uart3_init(uint16_t);
+
+void uart3_putc(unsigned char);
+
+void uart3_puts(unsigned char *);
+
+void uart3_puts_P(PGM_P);
+
+unsigned char uart3_getc(void);
+
+uint16_t uart3_ngetc(unsigned char *, uint16_t, uint16_t, uint16_t);
+
+void uart3_printf(char *, ...);
+
+void uart3_flushTX(void);
+
+#endif // USING_UART3
+
 #endif //_UART_H_

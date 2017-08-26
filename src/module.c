@@ -30,6 +30,7 @@ void module_read(Module m, char *read_data, uint16_t max_bytes) {
 }
 
 void module_write(Module m, char *write_data, uint16_t max_bytes) {
+  if (max_bytes) {} // stop complaining with warnings
   uart_printf("Write to type: %d\r\nWith data: %s\r\n", m.type_num,
       (char *)write_data);
 }

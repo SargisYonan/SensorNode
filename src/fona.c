@@ -26,10 +26,11 @@
 // as you might expect, the string is updates to strbuf based off strbuf_ptr
 // there is no "error", this function simply ends by returning strbuf_ptr
 uint8_t fonaGetData(char *strbuf, uint8_t strbuf_ptr, uint8_t attempts) {
-  //uart1_flushTX(); // force flush of data to FONA
+  //uart3_flushTX(); // force flush of data to FONA
   for (uint8_t i = 0; i < attempts;) {
     int16_t numBytes =
-      (int16_t) uart1_ngetc(strbuf, strbuf_ptr, RX_BUF_SIZE, RX_BUF_SIZE);
+      (int16_t) uart3_ngetc((unsigned char *) strbuf, strbuf_ptr, RX_BUF_SIZE,
+          RX_BUF_SIZE);
     if (numBytes == -1) {
       strbuf[0] = '\0';
       strbuf_ptr = 0;
@@ -63,7 +64,7 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
     char strbuf[RX_BUF_SIZE] = "";
     uint8_t strbuf_ptr = 0;
     while (strbuf_ptr == 0 || strbuf[strbuf_ptr - 1] != '\r') {
-      int16_t numbytes = (int16_t) uart1_ngetc(strbuf, strbuf_ptr, RX_BUF_SIZE,
+      int16_t numbytes = (int16_t) uart3_ngetc((unsigned char *) strbuf, strbuf_ptr, RX_BUF_SIZE,
           RX_BUF_SIZE);
       if (numbytes == -1) {
         uart_puts_P(PSTR("Fona reply was too many characters\r\n"));
@@ -89,7 +90,7 @@ uint8_t fonaWaitForReply(char *expectedmsg, int64_t milliseconds) {
 }
 
 uint8_t fonaAttemptConnection(void) {
-  uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
+  uart3_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
   if (!fonaWaitForReply("IP STATUS\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR(
@@ -97,7 +98,7 @@ uint8_t fonaAttemptConnection(void) {
     return 0;
   }
 
-  uart1_printf("AT+CIPSTART=\"%s\",\"%s\",\"%s\"\r\n", SERVERPROTOCOL,
+  uart3_printf("AT+CIPSTART=\"%s\",\"%s\",\"%s\"\r\n", SERVERPROTOCOL,
       SERVERIP, SERVERPORT);
   uart_printf("Sending to FONA: AT+CIPSTART=\"%s\",\"%s\",\"%s\"\r\n",
       SERVERPROTOCOL, SERVERIP, SERVERPORT);
@@ -139,11 +140,11 @@ void fona_init(Fona f) {
           "Fona not initialized due to not being initialized on PD2 then PD3 then a third pin\r\n"));
     return;
   }
-  uart1_init(4800);
+  uart3_init(4800);
   timer1_init();
 
   // Basically an initial test to make sure it responds at all
-  uart1_puts_P(PSTR("AT\r\n"));
+  uart3_puts_P(PSTR("AT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT\r\n"));
   if(!fonaWaitForReply("OK\r", 20 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -151,7 +152,7 @@ void fona_init(Fona f) {
   }
 
   // SHUTOFF ALL GPRS COMMUNICATIONS
-  uart1_puts_P(PSTR("AT+CIPSHUT\r\n"));
+  uart3_puts_P(PSTR("AT+CIPSHUT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSHUT\r\n"));
   if (!fonaWaitForReply("SHUT OK\r", 20 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -161,7 +162,7 @@ void fona_init(Fona f) {
   // send the 0x1a instead
   /*
   // SET MESSAGES TO AUTOMATICALLY SEND AFTER AN AMOUNT OF SECONDS
-  uart1_puts_P(PSTR("AT+CIPATS=1,2\r\n")); // enable time of 2 seconds
+  uart3_puts_P(PSTR("AT+CIPATS=1,2\r\n")); // enable time of 2 seconds
   uart_puts_P(PSTR("Sending to FONA: AT+CIPATS=1,2\r\n"));
   if (!fonaWaitForReply("OK\r", 5 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -170,7 +171,7 @@ void fona_init(Fona f) {
   */
 
   // Ensure that we are on initial IP STATUS STATE
-  uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
+  uart3_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
   if (!fonaWaitForReply("IP INITIAL\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -178,7 +179,7 @@ void fona_init(Fona f) {
   }
 
   // Confirm APN, USERNAME, PASS (NOTE: you need not re-specify)
-  uart1_puts_P(PSTR("AT+CSTT=\"wholesale\",\"\",\"\"\r\n"));
+  uart3_puts_P(PSTR("AT+CSTT=\"wholesale\",\"\",\"\"\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CSTT\r\n"));
   if (!fonaWaitForReply("OK\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -186,7 +187,7 @@ void fona_init(Fona f) {
   }
 
   // Enable GPRS connection (will now start blinking)
-  uart1_puts_P(PSTR("AT+CIICR\r\n"));
+  uart3_puts_P(PSTR("AT+CIICR\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIICR\r\n"));
   if (!fonaWaitForReply("OK\r", 10 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -194,10 +195,10 @@ void fona_init(Fona f) {
   }
 
   // Get IP (this is neccessary to advance internal state)
-  uart1_puts_P(PSTR("AT+CIFSR\r\n"));
+  uart3_puts_P(PSTR("AT+CIFSR\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIFSR\r\n"));
   _delay_ms(100); // this is a two part step technically so delay between TX
-  uart1_puts_P(PSTR("AT+CIPSTATUS\r\n"));
+  uart3_puts_P(PSTR("AT+CIPSTATUS\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSTATUS\r\n"));
   if (!fonaWaitForReply("IP STATUS\r", 2 * ONESECOND)) {
     uart_puts_P(PSTR("FONA not initialized correctly\r\n"));
@@ -215,6 +216,7 @@ void fona_init(Fona f) {
 // read everything sent to uart for some number of attempts
 // TODO: make it connect, read some stuff, then disconnect
 void fona_read(Fona f, char *read_data, uint16_t max_bytes) {
+  if (f.write) {} // stop complaining
   char strbuf[RX_BUF_SIZE];
   uint8_t strbuf_ptr = 0;
   strbuf_ptr = fonaGetData(strbuf, strbuf_ptr, ATTEMPTS10);
@@ -225,18 +227,19 @@ void fona_read(Fona f, char *read_data, uint16_t max_bytes) {
 
 // TODO: make it connect, send some stuff, then disconnect
 void fona_write(Fona f, char *str, uint16_t max_bytes) {
+  if (f.write || max_bytes) {} // stop complaining
   // -s means shell mode
   if (strcmp(str, "-s") != 0) { // send to the server
 
-    uart1_puts_P(PSTR("AT+CIPSEND\r\n"));
+    uart3_puts_P(PSTR("AT+CIPSEND\r\n"));
     uart_puts_P(PSTR("Sending to FONA: AT+CIPSEND\r\n"));
     if (!fonaWaitForReply("AT+CIPSEND\r", 10 * ONESECOND)) {
       uart_printf("FONA was unable to send message: %s\r\n", str);
     }
 
-    uart1_printf("%s\r\n", str);
+    uart3_printf("%s\r\n", str);
     uart_printf("Sending to FONA: %s\r\n", str);
-    uart1_putc((unsigned char) 0x1a);
+    uart3_putc((unsigned char) 0x1a);
     uart_puts_P(PSTR("Sending End of Message to FONA\r\n"));
     if (!fonaWaitForReply("SEND OK\r", 5 * ONESECOND)) {
       uart_printf("FONA was unable to send message: %s\r\n", str);
@@ -253,7 +256,7 @@ void fona_write(Fona f, char *str, uint16_t max_bytes) {
   uart_puts_P(PSTR("[SensorNode @ FONA ]$ "));
   for (;;) {
     uint8_t bytes_read = uart_ngetc((unsigned char *) strbuf, strbuf_ptr, RX_BUF_SIZE, RX_BUF_SIZE);
-    if (bytes_read == -1) {
+    if (bytes_read == (uint8_t) -1) {
       strbuf_ptr = 0;
       uart_puts_P(PSTR("\r\nString cleared due to exceeding in size\r\n"));
       uart_puts_P(PSTR("[SensorNode @ FONA ]$ "));
@@ -263,12 +266,12 @@ void fona_write(Fona f, char *str, uint16_t max_bytes) {
     if (strbuf_ptr > 0 && strbuf[strbuf_ptr - 1] == '\r') { // got the string
       if (strstr(strbuf, "-e")) break; // exit shell
       strbuf[strbuf_ptr - 1] = '\0';
-      if (strbuf_ptr > 1) uart1_printf("%s\r\n", strbuf);
+      if (strbuf_ptr > 1) uart3_printf("%s\r\n", strbuf);
       _delay_ms(100);
-      uart1_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE); // clear newline
+      uart3_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE); // clear newline
       uart_printf("FONA reply %s\r\n", strbuf);
       _delay_ms(100);
-      uart1_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE);
+      uart3_ngetc((unsigned char *) strbuf, 0, RX_BUF_SIZE, RX_BUF_SIZE);
       uart_printf("FONA reply %s\r\n", strbuf);
       uart_puts_P(PSTR("[SensorNode @ FONA ]$ "));
       strbuf_ptr = 0;
@@ -286,7 +289,7 @@ void fona_destroy(Fona f) {
     return;
   }
 
-  uart1_puts_P(PSTR("AT+CIPSHUT\r\n"));
+  uart3_puts_P(PSTR("AT+CIPSHUT\r\n"));
   uart_puts_P(PSTR("Sending to FONA: AT+CIPSHUT\r\n"));
   if (!fonaWaitForReply("SHUT OK\r", 10 * ONESECOND)) {
     uart_printf("FONA not de-initialized correctly\r\n");

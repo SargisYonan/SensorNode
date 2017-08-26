@@ -25,7 +25,7 @@ ISR(TIMER1_COMPA_vect) {
 // FIXME: the hardcode though
 void timerInit(int select) {
   unsigned char sreg;
-  unsigned int i;
+  if (select) {} // will be used eventually
   /* Save global interrupt flag */
   sreg = SREG;
   /* Disable interrupts */
@@ -55,7 +55,7 @@ uint32_t timer1Millis() {
 
 void timerSetCounter(int select, int val) {
   unsigned char sreg;
-  unsigned int i;
+  if (select) {} // will be used eventually
   /* Save global interrupt flag */
   sreg = SREG;
   /* Disable interrupts */
@@ -69,6 +69,7 @@ void timerSetCounter(int select, int val) {
 
 unsigned int timerReadCounter(int select) {
   unsigned char sreg;
+  if (select) {} // will be used eventually
   unsigned int i;
   /* Save global interrupt flag */
   sreg = SREG;
