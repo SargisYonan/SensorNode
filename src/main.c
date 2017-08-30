@@ -161,9 +161,9 @@ int main(void){
 
   // FIXME: the fona hardcoding begins
   uint8_t fona_pin_count = 3;
-  // PD2 = RX1, PD3 = TX1, PA4 = connect to RST
-  uint8_t fona_ports[] = {3, 3, 0};
-  uint8_t fona_bits[] = {2, 3, 4};
+  // PD2 = RX1, PD3 = TX1, PB3 = connect to RST
+  uint8_t fona_ports[] = {3, 3, 1};
+  uint8_t fona_bits[] = {2, 3, 3};
 
   uint8_t hum_pin_count = 2;
   // PD0 = SCL, PD1 = SDA
