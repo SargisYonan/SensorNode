@@ -1,120 +1,131 @@
-#include <avr/io.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <ctype.h>
 #include "parser.h"
-#include "uart.h"
-#include "uart_macros.h"
 #include <string.h>
-#include <math.h>
+#include <ctype.h>
+#include "common.h"
+#include "uart.h"
 
-char uart_buffer[UART_RX_BUFFER_SIZE];
-char parser_buffer[UART_RX_BUFFER_SIZE];
-uint8_t pb_index=0;
-
-void process_uart(void){
-    uint16_t c;
-    c = RADIO_GETC();
-    if( (c & UART_FRAME_ERROR) ||
-            (c & UART_OVERRUN_ERROR) ||
-            (c & UART_BUFFER_OVERFLOW) ){
-        /* set an error flag */
-        parser_flags.uart_error = 1;
-        /* should we reset the buffer? */
-        return;
-    }
-
-    /* there's a uart character to process */
-    if(!(c & UART_NO_DATA)){
-        if (c == '\n'){
-            // do we do something if pb_index = 0 at this point?
-            // --> probably not since it will be parsed as a bad command by parse_command
-            parser_flags.command_recieved=1;
-            memcpy(parser_buffer, uart_buffer, pb_index);
-            parser_buffer[pb_index]=0;
-#ifdef DEBUG
-            DEBUG_PUTS_P("Process_Uart: detected newline character\r\n\tcommand: ");
-            DEBUG_PUTS(parser_buffer);
-            DEBUG_PUTS_P("\r\n");
-#endif /* DEBUG */
-            pb_index=0;
-            /*
-             * resetting the index should allow us to avoid
-             * memsetting the buffer
-             */
-            return;
-        }
-        uart_buffer[pb_index++]= (unsigned char) c; /* lose those uart status flags */
-
-        /* bound checking if we recieve way to many characters drop the buffer */
-        if(pb_index >= UART_RX_BUFFER_SIZE){
-            /* clear the buffer and send a command error */
-            //parser_flags.command_error=1;
-            pb_index=0;
-        }
-    }
+// sets *add_ind to the address index and *reg_bit to the corresponding values
+// based off the token
+// When calling this you need to give it the address of locations of the two
+// uint8_t's that you would like the function to modify
+// returns 1 if token is valid and numbers correctly set; 0 otherwise
+uint8_t parse_pin(const char *token, uint8_t *add_ind,
+    uint8_t *reg_bit, uint8_t pin_count) {
+  if (token == NULL || add_ind == NULL || reg_bit == NULL) return 0;
+  if (strlen((char *) token) != 3 || token[0] != 'P') { // needs to be "PXN"
+    return 0;
+  }
+  if (token[1] < 'A' || token[1] > 'H' ||
+      token[2] < '0' || token[2] > '7') { // not following "PXN"
+    return 0;
+  }
+  add_ind[pin_count] = (token[1] - 'A');// 'A'-'H' : 0-7
+  reg_bit[pin_count] = (token[2] - '0');// '0'-'7' : 0-7
+  return 1;
 }
 
-void parse_command(void) {
-    /* look at queries */
-#ifdef DHT_SENSOR
-    if(strcasestr(parser_buffer, "T?")){
-        parser_flags.measure_temperature=1;
-    }
-    else if(strcasestr(parser_buffer, "H?")){
-        parser_flags.measure_humidity=1;
-    }
-#endif /* DHT_SENSOR */
-#ifdef TEMP_SENSOR
-    if(strcasestr(parser_buffer, "T?")){
-        parser_flags.measure_temperature=1;
-    }
-#endif /* TEMP_SENSOR */
-#ifdef LIGHT_SENSOR
-    if(strcasestr(parser_buffer, "L?")){
-        parser_flags.measure_light=1;
-    }
-#endif /* LIGHT_SENSOR */
-    else if(strcasestr(parser_buffer, "READ")){
-#ifdef DHT_SENSOR
-        parser_flags.measure_temperature=1;
-        parser_flags.measure_humidity=1;
-#endif /* DHT_SENSOR */
-#ifdef TEMP_SENSOR
-        parser_flags.measure_temperature=1;
-#endif /* TEMP_SENSOR */
-#ifdef LIGHT_SENSOR
-        parser_flags.measure_light=1;
-#endif /* LIGHT_SENSOR */
-    }
-    else if (strcasestr(parser_buffer, "S=")) {
-        int i = 0;
-        while (parser_buffer[i] != 'S' || parser_buffer[i + 1] != '=') {
-            i++;
+// returns a Parser object with relevant information
+// If there is an erroneous input, cmd will be set to the null character
+Parser parse_cmd(char *input_str) {
+  Parser p;
+  p.cmd = input_str[0]; // command is first character
+  p.ret_str = "";
+  const char delimit[4] = " \r\n";
+  const char *token = strtok(input_str, delimit);
+  uint8_t device_index = -1;
+  if (!token) { // no tokens
+    p.cmd = '\0';
+    return p;
+  }
+  switch(token[0]) {
+    case CHAR_CREATE:
+      {
+        uint8_t add_ind[8];
+        uint8_t reg_bit[8];
+        p.address_index = (const uint8_t *) add_ind;
+        p.reg_bit = (const uint8_t *) reg_bit;
+        p.pin_count = 0;
+        token = strtok(NULL, delimit);
+        if (!token) { // no arguments
+          p.cmd = '\0';
+          return p;
         }
-        uint16_t tval = 0; //temporarily used for calculating given number
-        int start = (i += 2); // move to index where number should start
-        while(isdigit(parser_buffer[i])) {
-            i++;
+        p.ret_str = token; // ret_str is now type_str
+        token = strtok(NULL, delimit);
+        if (token == NULL) { // no mention of onboard pin location
+          p.cmd = '\0';
+          return p;
         }
-        int stop = i - 1;
-        if (stop < start) parser_flags.command_error_setpoint = 1; // if stop is less than start, no number was entered
-        if (!parser_flags.command_error_setpoint) {
-            parser_flags.set_setpoint = 1;
-            parser_buffer[stop + 1] = '\0';
-            tval = (uint16_t) atoi(start + parser_buffer); // convert only the number part of the string
-            parser_flags.var_setpoint = tval;
+        if (!parse_pin(token, add_ind,
+              reg_bit, p.pin_count)) {
+          p.cmd = '\0';
+          return p;
         }
-    }
-    else if (strcasestr(parser_buffer, "S?")) {
-        parser_flags.get_setpoint=1;
-    }
-    else {
-        parser_flags.command_error=1;
-    }
-    parser_buffer[0]='\0'; /*
-                            * make parser empty string after using it
-                            * to prevent reparsing same command
-                            */
-    return;
+        p.pin_count++;
+        while (((token = strtok(NULL, delimit)) != NULL)) {
+          if (p.pin_count == 8) { //don't try to have more than 8 pins
+            p.cmd = '\0';
+            break;
+          }
+          if (!parse_pin(token, add_ind,
+                reg_bit, p.pin_count)) break;
+          p.pin_count++;
+        }
+      }
+      break;
+    case CHAR_INIT:
+      if (!isdigit(token[1])) { // this isn't a number (but it should be)
+        p.cmd = '\0';
+        return p;
+      }
+      device_index = (uint8_t) atoi(token + 1); // index is second character
+      p.device_index = device_index;
+      break;
+    case CHAR_READ:
+      if (!isdigit(token[1])) { // this isn't a number (but it should be)
+        p.cmd = '\0';
+        return p;
+      }
+      device_index = (uint8_t) atoi(token + 1); // index is second character
+      p.device_index = device_index;
+      break;
+    case CHAR_WRITE:
+      if (!isdigit(token[1])) { // this isn't a number (but it should be)
+        p.cmd = '\0';
+        return p;
+      }
+      device_index = (uint8_t) atoi(token + 1); // index is second character
+      p.device_index = device_index;
+      char ndelimit[3] = "\r\n"; // custom one so that spaces are included
+      token = strtok(NULL, ndelimit);
+      if (!token) { // no string to write
+        p.cmd = '\0';
+        return p;
+      }
+      p.ret_str = token; // ret_str is string to write
+      break;
+    case CHAR_DESTROY:
+      if (!isdigit(token[1])) { // this isn't a number (but it should be)
+        p.cmd = '\0';
+        return p;
+      }
+      device_index = (uint8_t) atoi(token + 1); // index is second character
+      p.device_index = device_index;
+      break;
+    case CHAR_KILL:
+      if (!isdigit(token[1])) { // this isn't a number (but it should be)
+        p.cmd = '\0';
+        return p;
+      }
+      device_index = (uint8_t) atoi(token + 1); // index is second character
+      p.device_index = device_index;
+      break;
+    case CHAR_MAP:
+      // nothing to do
+      break;
+    default:
+      p.cmd = '\0'; // invalid command
+      break;
+  }
+  return p;
 }

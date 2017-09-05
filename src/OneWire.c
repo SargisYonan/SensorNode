@@ -11,6 +11,9 @@
 
 #include "OneWire.h"
 
+#include <avr/pgmspace.h>
+
+#include "uart.h"
 
 DALLAS_IDENTIFIER_LIST_t identifier_list;
 
@@ -21,87 +24,26 @@ DALLAS_IDENTIFIER_LIST_t identifier_list;
 #define DALLAS_IDENTIFIER_DONE 0x01
 #define DALLAS_IDENTIFIER_SEARCH_ERROR 0x02
 
-
-// Private function prototypes //
-
-#ifndef ALLFUNCACCESS
-
-// Writes the LSB of the argument to the bus.
-void dallas_write(uint8_t);
-
-// Write a byte to the bus.
-void dallas_write_byte(uint8_t);
-
-// Write the specified number of bytes to the bus from the supplied buffer.
-void dallas_write_buffer(uint8_t * buffer, uint8_t buffer_length);
-
-// Read a bit from the bus and returns it as the LSB.
-uint8_t dallas_read(void);
-
-// Reads a byte from the bus.
-uint8_t dallas_read_byte(void);
-
-// Reads the specified number of bytes from the bus into the supplied buffer.
-void dallas_read_buffer(uint8_t * buffer, uint8_t buffer_length);
-
-// Resets the bus. Returns...
-// 1 - if a device or devices indicate presence
-// 0 - otherwise
-uint8_t dallas_reset(void);
-
-// Powers the bus from the AVR (max 40 mA).
-void dallas_drive_bus(void);
-
-// Sends a MATCH ROM command to the specified device. Automatically resets the
-// bus.
-void dallas_match_rom(DALLAS_IDENTIFIER_t *);
-
-// Sends a SKIP ROM command. Automatically resets the bus.
-void dallas_skip_rom(void);
-
-// Populates the identifier list. Returns...
-// 0 - if devices were found and there was no error
-// 1 - if there was a bus error
-// 2 - if there were more devices than specified by DALLAS_NUM_DEVICES
-uint8_t dallas_search_identifiers(void);
-
-// Returns the list of identifiers.
-DALLAS_IDENTIFIER_LIST_t * get_identifier_list(void);
-
-uint8_t dallas_command(uint8_t command, uint8_t with_reset);
-
-
-//Converts Dallas two byte temperature into real like structure
-DALLAS_TEMPERATURE getDallasTemp(uint8_t msb, uint8_t lsb);
-
-//search bus for slaves
-void search_bus();
-
-// converts a dallas temperature type to float for the avr
-float DTtof(DALLAS_TEMPERATURE dt);
-
-#endif //ALLFUNCACCESS
-
-static uint8_t dallas_discover_identifier(DALLAS_IDENTIFIER_t *,
+static uint8_t dallas_discover_identifier(Temp_Sensor, DALLAS_IDENTIFIER_t *,
 		DALLAS_IDENTIFIER_t *);
 
 // Functions //
 
-void dallas_write(uint8_t bit) {
+void dallas_write(Temp_Sensor t, uint8_t bit) {
 	if (bit == 0x00) {
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 		{
 			// Configure the pin as an output.
-			DALLAS_DDR |= _BV(DALLAS_PIN);
+			*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 			// Pull the bus low.
-			DALLAS_PORT &= ~_BV(DALLAS_PIN);
+			*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 			// Wait the required time.
 			_delay_us(DALLAS_TIME_ZERO);
 
 			// Release the bus.
-			DALLAS_PORT |= _BV(DALLAS_PIN);
+      *t.port[0] |= _BV(t.reg_bit[0]);
 
 			// Let the rest of the time slot expire.
 			_delay_us(DALLAS_TIME_FRAME - DALLAS_TIME_ZERO);
@@ -110,16 +52,16 @@ void dallas_write(uint8_t bit) {
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 		{
 			// Configure the pin as an output.
-			DALLAS_DDR |= _BV(DALLAS_PIN);
+			*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 			// Pull the bus low.
-			DALLAS_PORT &= ~_BV(DALLAS_PIN);
+			*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 			// Wait the required time.
 			_delay_us(DALLAS_TIME_ONE);
 
 			// Release the bus.
-			DALLAS_PORT |= _BV(DALLAS_PIN);
+      *t.port[0] |= _BV(t.reg_bit[0]);
 
 			// Let the rest of the time slot expire.
 			_delay_us(DALLAS_TIME_FRAME - DALLAS_TIME_ZERO);
@@ -127,27 +69,27 @@ void dallas_write(uint8_t bit) {
 	}
 }
 
-uint8_t dallas_read(void) {
+uint8_t dallas_read(Temp_Sensor t) {
 	uint8_t reply;
 
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 	{
 		// Configure the pin as an output.
-		DALLAS_DDR |= _BV(DALLAS_PIN);
+		*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 		// Pull the bus low.
-		DALLAS_PORT &= ~_BV(DALLAS_PIN);
+		*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait the required time.
 		_delay_us(2);
 
 		// Configure as input.
-		DALLAS_DDR &= ~_BV(DALLAS_PIN);
+    *t.ddr[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait for a bit.
 		_delay_us(11);
 
-		if ((DALLAS_PORT_IN & _BV(DALLAS_PIN)) == 0x00) {
+		if ((*t.pin[0] & _BV(t.reg_bit[0])) == 0x00) {
 			reply = 0x00;
 		} else {
 			reply = 0x01;
@@ -161,7 +103,7 @@ uint8_t dallas_read(void) {
 }
 
 // Resets the bus and returns 0x01 if a slave indicates present, 0x00 otherwise.
-uint8_t dallas_reset(void) {
+uint8_t dallas_reset(Temp_Sensor t) {
 	uint8_t reply;
 
 	// Reset the slave_reply variable.
@@ -171,20 +113,20 @@ uint8_t dallas_reset(void) {
 	{
 
 		// Configure the pin as an output.
-		DALLAS_DDR |= _BV(DALLAS_PIN);
+		*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 		// Pull the bus low.
-		DALLAS_PORT &= ~_BV(DALLAS_PIN);
+		*t.port[0] &= ~_BV(t.reg_bit[0]);
 
 		// Wait the required time.
 		_delay_us(DALLAS_TIME_RESET); // 500 uS
 
 		// Switch to an input, enable the pin change interrupt, and wait.
-		DALLAS_DDR &= ~_BV(DALLAS_PIN);
+		*t.ddr[0] &= ~_BV(t.reg_bit[0]);
 
 		_delay_us(DALLAS_TIME_PRESENCE);
 
-		if ((DALLAS_PORT_IN & _BV(DALLAS_PIN)) == 0x00) {
+		if ((*t.pin[0] & _BV(t.reg_bit[0])) == 0x00) {
 			reply = 0x01;
 		}
 
@@ -195,11 +137,11 @@ uint8_t dallas_reset(void) {
 	return reply;
 }
 
-void dallas_write_byte(uint8_t byte) {
+void dallas_write_byte(Temp_Sensor t, uint8_t byte) {
 	uint8_t position;
 
 	for (position = 0x00; position < 0x08; position++) {
-		dallas_write(byte & 0x01);
+		dallas_write(t, byte & 0x01);
 
 		byte = (byte >> 1);
 	}
@@ -208,61 +150,61 @@ void dallas_write_byte(uint8_t byte) {
 
 }
 
-uint8_t dallas_read_byte(void) {
+uint8_t dallas_read_byte(Temp_Sensor t) {
 	uint8_t byte;
 	uint8_t position;
 
 	byte = 0x00;
 
 	for (position = 0x00; position < 0x08; position++) {
-		byte += (dallas_read() << position);
+		byte += (dallas_read(t) << position);
 	}
 
 	return byte;
 }
 
 // Uses the uC to power the bus.
-void dallas_drive_bus(void) {
+void dallas_drive_bus(Temp_Sensor t) {
 	// Configure the pin as an output.
-	DALLAS_DDR |= _BV(DALLAS_PIN);
+	*t.ddr[0] |= _BV(t.reg_bit[0]);
 
 	// Set the bus high.
-	DALLAS_PORT |= _BV(DALLAS_PIN);
+	*t.port[0] |= _BV(t.reg_bit[0]);
 }
 
-void dallas_match_rom(DALLAS_IDENTIFIER_t * identifier) {
+void dallas_match_rom(Temp_Sensor t, DALLAS_IDENTIFIER_t * identifier) {
 	uint8_t identifier_bit;
 	uint8_t current_byte;
 	uint8_t current_bit;
 
-	dallas_reset();
-	dallas_write_byte(MATCH_ROM_COMMAND);
+	dallas_reset(t);
+	dallas_write_byte(t, MATCH_ROM_COMMAND);
 
 	for (identifier_bit = 0x00; identifier_bit < DALLAS_NUM_IDENTIFIER_BITS;
 			identifier_bit++) {
 		current_byte = identifier_bit / 8;
 		current_bit = identifier_bit - (current_byte * 8);
 
-		dallas_write(identifier->identifier[current_byte] & _BV(current_bit));
+		dallas_write(t, identifier->identifier[current_byte] & _BV(current_bit));
 	}
 }
 
-void dallas_skip_rom(void) {
-	//dallas_reset();
-	dallas_write_byte(SKIP_ROM_COMMAND);
+void dallas_skip_rom(Temp_Sensor t) {
+	//dallas_reset(t);
+	dallas_write_byte(t, SKIP_ROM_COMMAND);
 }
 
-uint8_t dallas_search_identifiers(void) {
+uint8_t dallas_search_identifiers(Temp_Sensor t) {
 	uint8_t current_device;
 	uint8_t return_code;
 
 	for (current_device = 0x00; current_device < DALLAS_NUM_DEVICES;
 			current_device++) {
 		if (current_device == 0x00) {
-			return_code = dallas_discover_identifier(
+			return_code = dallas_discover_identifier(t,
 					&identifier_list.identifiers[current_device], 0x00);
 		} else {
-			return_code = dallas_discover_identifier(
+			return_code = dallas_discover_identifier(t,
 					&identifier_list.identifiers[current_device],
 					&identifier_list.identifiers[current_device - 1]);
 		}
@@ -282,10 +224,12 @@ DALLAS_IDENTIFIER_LIST_t * get_identifier_list(void) {
 	return &identifier_list;
 }
 
-static uint8_t dallas_discover_identifier(
-		DALLAS_IDENTIFIER_t * current_identifier,
-		DALLAS_IDENTIFIER_t * last_identifier) {
-	uint8_t identifier_bit;
+static uint8_t dallas_discover_identifier (
+    Temp_Sensor t,
+    DALLAS_IDENTIFIER_t * current_identifier,
+    DALLAS_IDENTIFIER_t * last_identifier) {
+
+  uint8_t identifier_bit;
 	uint8_t received_two_bits;
 	uint8_t current_bit;
 	uint8_t current_byte;
@@ -294,13 +238,13 @@ static uint8_t dallas_discover_identifier(
 	identifier_diverged = 0x00;
 	identifier_bit = 0x00;
 
-	dallas_reset();
-	dallas_write_byte(SEARCH_ROM_COMMAND);
+	dallas_reset(t);
+	dallas_write_byte(t, SEARCH_ROM_COMMAND);
 
 	for (identifier_bit = 0; identifier_bit < DALLAS_NUM_IDENTIFIER_BITS;
 			identifier_bit++) {
-		received_two_bits = (dallas_read() << 1);
-		received_two_bits += dallas_read();
+		received_two_bits = (dallas_read(t) << 1);
+		received_two_bits += dallas_read(t);
 
 		current_byte = identifier_bit / 8;
 		current_bit = identifier_bit - (current_byte * 8);
@@ -310,11 +254,11 @@ static uint8_t dallas_discover_identifier(
 
 			current_identifier->identifier[current_byte] += (1 << current_bit);
 
-			dallas_write(0x01);
+			dallas_write(t, 0x01);
 		} else if (received_two_bits == 0x01) {
 			// All devices have a 0 at this position.
 
-			dallas_write(0x00);
+			dallas_write(t, 0x00);
 		} else if (received_two_bits == 0x00) {
 			if ((identifier_diverged == 0x00) && (last_identifier != 0x00)) {
 				identifier_diverged = 0x01;
@@ -326,15 +270,15 @@ static uint8_t dallas_discover_identifier(
 					current_identifier->identifier[current_byte] += (1
 							<< current_bit);
 
-					dallas_write(0x01);
+					dallas_write(t, 0x01);
 				} else {
 					// Otherwise 0.
 
-					dallas_write(0x00);
+					dallas_write(t, 0x00);
 				}
 			} else {
 				// We'll go with 0.
-				dallas_write(0x00);
+				dallas_write(t, 0x00);
 			}
 		} else {
 			// Error
@@ -349,30 +293,34 @@ static uint8_t dallas_discover_identifier(
 	}
 }
 
-void dallas_write_buffer(uint8_t * buffer, uint8_t buffer_length) {
+void dallas_write_buffer(Temp_Sensor t,
+    uint8_t * buffer, uint8_t buffer_length) {
+
 	uint8_t i;
 
 	for (i = 0x00; i < buffer_length; i++) {
-		dallas_write_byte(buffer[i]);
+		dallas_write_byte(t, buffer[i]);
 	}
 }
 
-void dallas_read_buffer(uint8_t * buffer, uint8_t buffer_length) {
-	uint8_t i;
+void dallas_read_buffer(Temp_Sensor t,
+    uint8_t * buffer, uint8_t buffer_length) {
+
+  uint8_t i;
 
 	for (i = 0x00; i < buffer_length; i++) {
-		buffer[i] = dallas_read_byte();
+		buffer[i] = dallas_read_byte(t);
 	}
 }
 
 //Issue dallas command, reset and test bus first - on request.
-uint8_t dallas_command(uint8_t command, uint8_t with_reset) {
+uint8_t dallas_command(Temp_Sensor t, uint8_t command, uint8_t with_reset) {
 
 	if (with_reset) {
-		if (!dallas_reset())
+		if (!dallas_reset(t))
 			return 0;
 	}
-	dallas_write_byte(command);
+	dallas_write_byte(t, command);
 	return 1;
 }
 
@@ -410,7 +358,7 @@ DALLAS_TEMPERATURE getDallasTemp(uint8_t msb, uint8_t lsb) {
 }
 
 
-void search_bus() {
+void search_bus(Temp_Sensor t) {
 
 	uint8_t i;
 
@@ -418,9 +366,9 @@ void search_bus() {
 	DALLAS_IDENTIFIER_LIST_t * ids;
 
 
-	if (dallas_reset()) {
+	if (dallas_reset(t)) {
 
-		switch (dallas_search_identifiers()) {
+		switch (dallas_search_identifiers(t)) {
 		case 0x00:
 			printf("> Bus Test - OK\r\n");
 			break;
@@ -480,19 +428,19 @@ float CelsiusToFahrenheit(float celsius)
 }
 */
 
-float getTemperatureC(void)
+float getTemperatureC(Temp_Sensor t)
 {
 	uint8_t chip_scratchpad[9];
 
-		if (dallas_command(SKIP_ROM_COMMAND, 1)) 
+		if (dallas_command(t, SKIP_ROM_COMMAND, 1)) 
 		{
-			dallas_command(CONVERT_TEMP__COMMAND, 0);
+			dallas_command(t, CONVERT_TEMP__COMMAND, 0);
 			_delay_ms(500); //wait for conversion result.
 
-			if (dallas_command(SKIP_ROM_COMMAND, 1)) 
+			if (dallas_command(t, SKIP_ROM_COMMAND, 1)) 
 			{
-				dallas_command(READ_SCRATCHPAD_COMMAND, 0);
-				dallas_read_buffer(chip_scratchpad, 9);
+				dallas_command(t, READ_SCRATCHPAD_COMMAND, 0);
+				dallas_read_buffer(t, chip_scratchpad, 9);
 				return (DTtof(getDallasTemp(chip_scratchpad[1],chip_scratchpad[0])));
 
 			}
@@ -501,3 +449,32 @@ float getTemperatureC(void)
 }
 
 
+// Sensor Node v3 module stuff //
+
+uint8_t temp_sensor_count = 0;
+
+// sets an index of the temp_sensor module array to be the new temp_sensor's info
+// also sets the fields accordingly
+// RETURNS:
+// the temp_sensor with fields sest appropriately
+// or a default module if too many temp_sensors already exist
+Temp_Sensor new_temp_sensor(uint8_t type_num, Temp_Sensor t) {
+  if (temp_sensor_count >= TEMP_SENSOR_MAX) {
+    return t; // remember the key is that it has defaults set
+  }
+  t.type_num = type_num;
+  t.init = &temp_sensor_init;
+  t.read = &temp_sensor_read;
+  return t;
+}
+
+void temp_sensor_init(Temp_Sensor t) {
+  getTemperatureC(t);
+  uart_puts_P(PSTR("Released temp_sensor garbage data\r\n"));
+}
+
+void temp_sensor_read(Temp_Sensor t, char *read_data, uint16_t max_bytes) {
+  float tempC = getTemperatureC(t);
+  uart_printf("Temperature = %f\r\n", tempC);
+  snprintf(read_data, max_bytes, "%f\r\n", tempC);
+}

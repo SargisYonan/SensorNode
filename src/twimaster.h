@@ -2,9 +2,9 @@
 #define _I2CMASTER_H
 /************************************************************************* 
 * Title:    C include file for the I2C master interface 
-*           (i2cmaster.S or twimaster.c)
+*           (twimaster.S or twimaster.c)
 * Author:   Peter Fleury <pfleury@gmx.ch>
-* File:     $Id: i2cmaster.h,v 1.12 2015/09/16 09:27:58 peter Exp $
+* File:     $Id: twimaster.h,v 1.12 2015/09/16 09:27:58 peter Exp $
 * Software: AVR-GCC 4.x
 * Target:   any AVR device
 * Usage:    see Doxygen manual
@@ -13,7 +13,7 @@
 /**
  @file
  @defgroup pfleury_ic2master I2C Master library
- @code #include <i2cmaster.h> @endcode
+ @code #include <twimaster.h> @endcode
   
  @brief I2C (TWI) Master Software Library
 
@@ -21,19 +21,19 @@
  implementation is limited to one bus master on the I2C bus. 
 
  This I2c library is implemented as a compact assembler software implementation of the I2C protocol 
- which runs on any AVR (i2cmaster.S) and as a TWI hardware interface for all AVR with built-in TWI hardware (twimaster.c).
+ which runs on any AVR (twimaster.S) and as a TWI hardware interface for all AVR with built-in TWI hardware (twimaster.c).
  Since the API for these two implementations is exactly the same, an application can be linked either against the
  software I2C implementation or the hardware I2C implementation.
 
  Use 4.7k pull-up resistor on the SDA and SCL pin.
  
  Adapt the SCL and SDA port and pin definitions and eventually the delay routine in the module 
- i2cmaster.S to your target when using the software I2C implementation ! 
+ twimaster.S to your target when using the software I2C implementation ! 
  
  Adjust the  CPU clock frequence F_CPU in twimaster.c or in the Makfile when using the TWI hardware implementaion.
 
  @note 
-    The module i2cmaster.S is based on the Atmel Application Note AVR300, corrected and adapted 
+    The module twimaster.S is based on the Atmel Application Note AVR300, corrected and adapted 
     to GNU assembler and AVR-GCC C call interface.
     Replaced the incorrect quarter period delays found in AVR300 with 
     half period delays. 
@@ -42,11 +42,11 @@
  @copyright (C) 2015 Peter Fleury, GNU General Public License Version 3
  
  @par API Usage Example
-  The following code shows typical usage of this library, see example test_i2cmaster.c
+  The following code shows typical usage of this library, see example test_twimaster.c
 
  @code
 
- #include <i2cmaster.h>
+ #include <twimaster.h>
 
 
  #define Dev24C02  0xA2      // device address of EEPROM 24C02, see datasheet
@@ -170,7 +170,7 @@ extern unsigned char i2c_readNak(void);
  @return   byte read from I2C device
  */
 extern unsigned char i2c_read(unsigned char ack);
-#define i2c_read(ack)  (ack) ? i2c_readAck() : i2c_readNak(); 
+#define i2c_read(ack)  ((ack) ? i2c_readAck() : i2c_readNak())
 
 
 

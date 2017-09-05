@@ -1,5 +1,6 @@
 PROGRAMMER=avrdude
 LINPORT=/dev/ttyACM0
+LINPORT=/dev/ttyS0 #working on vbox
 MACPORT=/dev/tty.usbmodem1421
 WINPORT=COM3
 CC=avr-gcc
@@ -8,10 +9,8 @@ TARGET=main
 OBJCOPY=avr-objcopy
 RM=rm -f
 F_CPU=16000000UL
-CDEFS=-DF_CPU=$(F_CPU)
-CDEFS+=-DUART_TX_BUFFER_SIZE=16
-CDEFS+=-DUART_RX_BUFFER_SIZE=16
-CDEFS+=-DLIGHT_SENSOR
+CDEFS=-DF_CPU=$(F_CPU) -DUSING_UART3
+# TODO: is this being used anymore?
 ifdef NORADIO
 	CDEFS+=-DNORADIO
 else
@@ -25,7 +24,7 @@ CSTANDARD=-std=gnu99
 MCU=atmega2560
 
 
-CFLAGS=-Wall 
+CFLAGS=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wimplicit
 CFLAGS+=-Wstrict-prototypes
@@ -40,6 +39,10 @@ LDFLAGS+=-Wl,-u,vfprintf -lprintf_flt -lm
 
 CFLAGS+=-O$(OPT)
 LDFLAGS+=-O$(OPT)
+
+MODULES = main parser uart module actuator OneWire fona current_sensor
+MODULES += twimaster humidity_sensor light_sensor can_bus extra_util
+OBJECTS = $(MODULES:%=%.o)
 
 ######## OS Detection #########
 ifeq ($(OS), Windows_NT)
@@ -63,26 +66,11 @@ all: $(TARGET).hex
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
 
-$(TARGET).elf: main.o I2C_lib.o twimaster.o uart.o parser.o
-	$(CC) -mmcu=$(MCU) $(LDFLAGS) main.o I2C_lib.o twimaster.o uart.o parser.o -o $(TARGET).elf
+$(TARGET).elf: $(OBJECTS)
+	$(CC) -mmcu=$(MCU) $(LDFLAGS) $^ -o $(TARGET).elf
 
-dht.o: dht.c dht.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c dht.c
-
-main.o: main.c dht.h uart_macros.h uart.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c main.c
-
-uart.o: uart.c uart.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c uart.c
-
-parser.o: parser.c parser.h uart.h uart_macros.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c parser.c
-
-twimaster.o: twimaster.c i2cmaster.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c twimaster.c
-
-I2C_lib.o: I2C_lib.c I2C_lib.h
-	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c I2C_lib.c
+%.o: %.c
+	$(CC) -mmcu=$(MCU) $(CFLAGS) $(CDEFS) -c $<
 
 clean:
 	$(RM) $(TARGET).elf $(TARGET).hex *.o $(TARGET).map *.lst
@@ -92,4 +80,4 @@ ifndef PROGRAMMER_PATH
 	$(error "OS not configured in makefile: $(UNAME)")
 	exit 1
 endif
-	$(PROGRAMMER) -P $(PROGRAMMER_PATH) -p $(MCU) -c stk500v2 -e -b 115200 -U flash:w:$(TARGET).hex
+	$(PROGRAMMER) -P $(PROGRAMMER_PATH) -p $(MCU) -c stk500v2 -b 115200 -U flash:w:$(TARGET).hex -D
